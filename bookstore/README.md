@@ -130,6 +130,8 @@ private static final String DB_PASSWORD = "123456";  // 修改为你的数据库
 
 ### 3. 编译和运行
 
+#### 方法一：使用Maven插件（推荐）
+
 1. 使用Maven编译项目：
    ```bash
    mvn clean compile
@@ -140,11 +142,25 @@ private static final String DB_PASSWORD = "123456";  // 修改为你的数据库
    mvn javafx:run
    ```
 
-   或者先编译再运行：
-   ```bash
-   mvn clean compile
-   mvn javafx:run
-   ```
+#### 方法二：使用启动脚本（Windows）
+
+直接双击运行 `run.bat` 脚本，或在命令行中执行：
+```bash
+run.bat
+```
+
+#### 方法三：使用Launcher类
+
+如果直接运行BookstoreApplication遇到JavaFX运行时组件问题，可以运行Launcher类：
+```bash
+java -cp target/classes com.university.bookstore.Launcher
+```
+
+#### 方法四：使用exec插件
+
+```bash
+mvn exec:java
+```
 
 ## 默认用户账号
 
@@ -236,8 +252,15 @@ private static final String DB_PASSWORD = "123456";  // 修改为你的数据库
 - 确保数据库 `university_bookstore` 已创建
 
 ### 2. JavaFX运行时错误
+
+**错误信息**: `错误: 缺少 JavaFX 运行时组件, 需要使用该组件来运行此应用程序`
+
+**解决方案**:
+- **推荐方式**: 使用 `mvn javafx:run` 命令运行应用程序
+- **备选方式1**: 运行 `run.bat` 启动脚本
+- **备选方式2**: 使用 `mvn exec:java` 命令
+- **备选方式3**: 运行Launcher类 `java -cp target/classes com.university.bookstore.Launcher`
 - 项目已配置JavaFX 18.0.2，使用JDK 18
-- 使用 `mvn javafx:run` 命令运行应用程序
 - 确保Maven配置正确
 
 ### 3. 中文乱码问题
