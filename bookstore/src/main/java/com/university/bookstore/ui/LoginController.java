@@ -25,8 +25,9 @@ public class LoginController implements Initializable {
     @FXML
     private PasswordField passwordField;
     
-    @FXML
-    private ComboBox<String> roleComboBox;
+    // 移除角色选择框，系统将自动识别用户角色
+    // @FXML
+    // private ComboBox<String> roleComboBox;
     
     @FXML
     private Button loginButton;
@@ -43,9 +44,7 @@ public class LoginController implements Initializable {
     public void initialize(URL location, ResourceBundle resources) {
         userService = new UserServiceImpl();
         
-        // 初始化角色下拉框
-        roleComboBox.getItems().addAll("学生", "教师", "管理员");
-        roleComboBox.setValue("学生");
+        // 移除角色下拉框初始化，系统将自动识别用户角色
         
         // 设置按钮事件
         loginButton.setOnAction(event -> handleLogin());
@@ -62,28 +61,20 @@ public class LoginController implements Initializable {
     private void handleLogin() {
         String username = usernameField.getText().trim();
         String password = passwordField.getText();
-        String roleStr = roleComboBox.getValue();
         
         // 验证输入
-        if (username.isEmpty() || password.isEmpty() || roleStr == null) {
-            showMessage("请填写完整的登录信息", false);
+        if (username.isEmpty() || password.isEmpty()) {
+            showMessage("请填写用户名和密码", false);
             return;
         }
         
-        // 转换角色
-        User.UserRole role = convertRole(roleStr);
-        if (role == null) {
-            showMessage("无效的用户角色", false);
-            return;
-        }
-        
-        // 执行登录
-        User user = userService.login(username, password, role);
+        // 执行登录（自动识别角色）
+        User user = userService.login(username, password);
         if (user != null) {
             showMessage("登录成功", true);
             openMainWindow(user);
         } else {
-            showMessage("用户名、密码或角色不正确", false);
+            showMessage("用户名或密码不正确", false);
         }
     }
     

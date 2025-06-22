@@ -19,6 +19,14 @@ public interface UserService {
     User login(String username, String password, User.UserRole role);
     
     /**
+     * 用户登录（自动识别角色）
+     * @param username 用户名
+     * @param password 密码
+     * @return 登录成功返回用户对象，否则返回null
+     */
+    User login(String username, String password);
+    
+    /**
      * 用户注册
      * @param user 用户对象
      * @return 注册成功返回true，否则返回false

@@ -24,7 +24,6 @@
          <rowConstraints>
             <RowConstraints vgrow="NEVER" />
             <RowConstraints vgrow="NEVER" />
-            <RowConstraints vgrow="NEVER" />
          </rowConstraints>
          
          <Label text="用户名:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
@@ -32,9 +31,6 @@
          
          <Label text="密码:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
          <PasswordField fx:id="passwordField" promptText="请输入密码" GridPane.columnIndex="1" GridPane.rowIndex="1" />
-         
-         <Label text="角色:" GridPane.columnIndex="0" GridPane.rowIndex="2" />
-         <ComboBox fx:id="roleComboBox" maxWidth="1.7976931348623157E308" GridPane.columnIndex="1" GridPane.rowIndex="2" />
          
          <VBox.margin>
             <Insets left="30.0" right="30.0" />

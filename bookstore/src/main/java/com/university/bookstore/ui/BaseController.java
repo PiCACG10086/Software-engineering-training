@@ -1,9 +1,14 @@
 package com.university.bookstore.ui;
 
 import com.university.bookstore.model.User;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
+import javafx.stage.Stage;
+import javafx.scene.Node;
 
+import java.io.IOException;
 import java.util.Optional;
 
 /**
@@ -214,6 +219,38 @@ public abstract class BaseController {
                 return "已取消";
             default:
                 return "未知";
+        }
+    }
+    
+    /**
+     * 退出登录功能
+     * @param event 触发事件的控件
+     */
+    protected void handleLogout(Node event) {
+        // 显示确认对话框
+        boolean confirmed = showConfirmDialog("退出登录", "确定要退出登录吗？");
+        
+        if (confirmed) {
+            try {
+                // 清除当前用户信息
+                currentUser = null;
+                
+                // 加载登录界面
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/login.fxml"));
+                Scene loginScene = new Scene(loader.load(), 400, 300);
+                
+                // 获取当前窗口并切换到登录界面
+                Stage currentStage = (Stage) event.getScene().getWindow();
+                currentStage.setScene(loginScene);
+                currentStage.setTitle("用户登录");
+                currentStage.centerOnScreen();
+                
+                showInfoAlert("退出成功", "已成功退出登录");
+                
+            } catch (IOException e) {
+                showErrorAlert("退出失败", "退出登录时发生错误：" + e.getMessage());
+                e.printStackTrace();
+            }
         }
     }
 }

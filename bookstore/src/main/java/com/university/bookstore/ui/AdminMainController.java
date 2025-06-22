@@ -668,12 +668,7 @@ public class AdminMainController extends BaseController implements Initializable
         showInfoAlert("功能提示", "修改密码功能待实现");
     }
     
-    @FXML
-    private void handleLogout() {
-        if (showConfirmDialog("确认退出", "确定要退出登录吗？")) {
-            showInfoAlert("退出登录", "退出登录功能待实现");
-        }
-    }
+
     
     // 辅助方法
     
@@ -778,5 +773,12 @@ public class AdminMainController extends BaseController implements Initializable
         alert.setContentText(sb.toString());
         alert.getDialogPane().setPrefWidth(400);
         alert.showAndWait();
+    }
+    
+    /**
+     * 处理退出登录事件
+     */
+    private void handleLogout() {
+        handleLogout(logoutButton);
     }
 }
