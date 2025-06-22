@@ -17,7 +17,7 @@ public class OrderDAOImpl implements OrderDAO {
 
     @Override
     public Order findById(Integer id) {
-        String sql = "SELECT * FROM orders WHERE id = ?";
+        String sql = "SELECT * FROM t_order WHERE id = ?";
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             
@@ -35,7 +35,7 @@ public class OrderDAOImpl implements OrderDAO {
 
     @Override
     public Order findByOrderNumber(String orderNumber) {
-        String sql = "SELECT * FROM orders WHERE order_number = ?";
+        String sql = "SELECT * FROM t_order WHERE order_number = ?";
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             
@@ -53,7 +53,7 @@ public class OrderDAOImpl implements OrderDAO {
 
     @Override
     public List<Order> findByStudentId(Integer studentId) {
-        String sql = "SELECT * FROM orders WHERE student_id = ? ORDER BY create_time DESC";
+        String sql = "SELECT * FROM t_order WHERE student_id = ? ORDER BY create_time DESC";
         List<Order> orders = new ArrayList<>();
         
         try (Connection conn = DBUtil.getConnection();
@@ -73,7 +73,7 @@ public class OrderDAOImpl implements OrderDAO {
 
     @Override
     public List<Order> findByStatus(Order.OrderStatus status) {
-        String sql = "SELECT * FROM orders WHERE status = ? ORDER BY create_time DESC";
+        String sql = "SELECT * FROM t_order WHERE status = ? ORDER BY create_time DESC";
         List<Order> orders = new ArrayList<>();
         
         try (Connection conn = DBUtil.getConnection();
@@ -93,7 +93,7 @@ public class OrderDAOImpl implements OrderDAO {
 
     @Override
     public List<Order> findAll() {
-        String sql = "SELECT * FROM orders ORDER BY create_time DESC";
+        String sql = "SELECT * FROM t_order ORDER BY create_time DESC";
         List<Order> orders = new ArrayList<>();
         
         try (Connection conn = DBUtil.getConnection();
@@ -149,8 +149,8 @@ public class OrderDAOImpl implements OrderDAO {
 
     @Override
     public boolean insert(Order order) {
-        String sql = "INSERT INTO orders (order_number, student_id, total_price, status, create_time, update_time) " +
-                    "VALUES (?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO t_order (order_number, student_id, total_price, status, create_time) " +
+                    "VALUES (?, ?, ?, ?, ?)";
         
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -160,7 +160,6 @@ public class OrderDAOImpl implements OrderDAO {
             stmt.setBigDecimal(3, order.getTotalPrice());
             stmt.setString(4, order.getStatus().name());
             stmt.setTimestamp(5, new Timestamp(order.getCreateTime().getTime()));
-            stmt.setTimestamp(6, new Timestamp(order.getUpdateTime().getTime()));
             
             int affectedRows = stmt.executeUpdate();
             if (affectedRows > 0) {
@@ -200,14 +199,13 @@ public class OrderDAOImpl implements OrderDAO {
 
     @Override
     public boolean updateStatus(Integer orderId, Order.OrderStatus status) {
-        String sql = "UPDATE orders SET status = ?, update_time = ? WHERE id = ?";
+        String sql = "UPDATE t_order SET status = ? WHERE id = ?";
         
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             
             stmt.setString(1, status.name());
-            stmt.setTimestamp(2, new Timestamp(System.currentTimeMillis()));
-            stmt.setInt(3, orderId);
+            stmt.setInt(2, orderId);
             
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -218,7 +216,7 @@ public class OrderDAOImpl implements OrderDAO {
 
     @Override
     public boolean delete(Integer id) {
-        String sql = "DELETE FROM orders WHERE id = ?";
+        String sql = "DELETE FROM t_order WHERE id = ?";
         
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -233,7 +231,7 @@ public class OrderDAOImpl implements OrderDAO {
 
     @Override
     public List<OrderDetail> findOrderDetailsByOrderId(Integer orderId) {
-        String sql = "SELECT * FROM order_details WHERE order_id = ?";
+        String sql = "SELECT * FROM t_order_detail WHERE order_id = ?";
         List<OrderDetail> details = new ArrayList<>();
         
         try (Connection conn = DBUtil.getConnection();
@@ -253,8 +251,8 @@ public class OrderDAOImpl implements OrderDAO {
 
     @Override
     public boolean insertOrderDetail(OrderDetail orderDetail) {
-        String sql = "INSERT INTO order_details (order_id, book_id, quantity, unit_price, subtotal) " +
-                    "VALUES (?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO t_order_detail (order_id, book_id, quantity, unit_price) " +
+                    "VALUES (?, ?, ?, ?)";
         
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -263,7 +261,6 @@ public class OrderDAOImpl implements OrderDAO {
             stmt.setLong(2, orderDetail.getBookId());
             stmt.setInt(3, orderDetail.getQuantity());
             stmt.setBigDecimal(4, orderDetail.getUnitPrice());
-            stmt.setBigDecimal(5, orderDetail.getSubtotal());
             
             int affectedRows = stmt.executeUpdate();
             if (affectedRows > 0) {
@@ -296,7 +293,7 @@ public class OrderDAOImpl implements OrderDAO {
 
     @Override
     public boolean existsByOrderNumber(String orderNumber) {
-        String sql = "SELECT COUNT(*) FROM orders WHERE order_number = ?";
+        String sql = "SELECT COUNT(*) FROM t_order WHERE order_number = ?";
         
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -377,7 +374,8 @@ public class OrderDAOImpl implements OrderDAO {
         order.setTotalPrice(rs.getBigDecimal("total_price"));
         order.setStatus(Order.OrderStatus.valueOf(rs.getString("status")));
         order.setCreateTime(rs.getTimestamp("create_time"));
-        order.setUpdateTime(rs.getTimestamp("update_time"));
+        // 数据库表中没有update_time字段，设置为null
+        order.setUpdateTime(null);
         return order;
     }
 
@@ -392,7 +390,7 @@ public class OrderDAOImpl implements OrderDAO {
             return true;
         }
         
-        String sql = "INSERT INTO order_details (order_id, book_id, quantity, unit_price, subtotal) VALUES (?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO t_order_detail (order_id, book_id, quantity, unit_price) VALUES (?, ?, ?, ?)";
         
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -402,7 +400,6 @@ public class OrderDAOImpl implements OrderDAO {
                 stmt.setInt(2, detail.getBookId());
                 stmt.setInt(3, detail.getQuantity());
                 stmt.setBigDecimal(4, detail.getUnitPrice());
-                stmt.setBigDecimal(5, detail.getSubtotal());
                 stmt.addBatch();
             }
             
