@@ -18,6 +18,7 @@ com\university\bookstore\ui\StudentMainController$1.class
 com\university\bookstore\ui\TeacherMainController$2.class
 com\university\bookstore\BookstoreApplication.class
 com\university\bookstore\dao\UserDAO.class
+com\university\bookstore\Launcher.class
 com\university\bookstore\model\Order.class
 com\university\bookstore\ui\AdminMainController$2.class
 com\university\bookstore\model\Department.class

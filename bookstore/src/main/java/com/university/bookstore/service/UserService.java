@@ -34,6 +34,13 @@ public interface UserService {
     boolean register(User user);
     
     /**
+     * 添加用户（管理员功能）
+     * @param user 用户对象
+     * @return 添加成功返回true，否则返回false
+     */
+    boolean addUser(User user);
+    
+    /**
      * 根据ID获取用户信息
      * @param id 用户ID
      * @return 用户对象

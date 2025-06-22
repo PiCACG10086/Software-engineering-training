@@ -36,6 +36,22 @@ public class UserServiceImpl implements UserService {
         return null;
     }
     
+    /**
+     * 用户登录（自动识别角色）
+     * @param username 用户名
+     * @param password 密码
+     * @return 登录成功返回用户对象，否则返回null
+     */
+    @Override
+    public User login(String username, String password) {
+        if (username == null || password == null) {
+            return null;
+        }
+        
+        // 直接使用明文密码验证用户，不检查角色
+        return userDAO.findByUsernameAndPassword(username, password);
+    }
+    
     @Override
     public boolean register(User user) {
         if (user == null || user.getUsername() == null || user.getPassword() == null) {
@@ -48,6 +64,23 @@ public class UserServiceImpl implements UserService {
         }
         
         // 直接使用明文密码
+        
+        // 设置创建时间
+        user.setCreateTime(new java.sql.Timestamp(System.currentTimeMillis()));
+        
+        return userDAO.insert(user);
+    }
+    
+    @Override
+    public boolean addUser(User user) {
+        if (user == null || user.getUsername() == null || user.getPassword() == null) {
+            return false;
+        }
+        
+        // 检查用户名是否已存在
+        if (userDAO.existsByUsername(user.getUsername())) {
+            return false;
+        }
         
         // 设置创建时间
         user.setCreateTime(new java.sql.Timestamp(System.currentTimeMillis()));

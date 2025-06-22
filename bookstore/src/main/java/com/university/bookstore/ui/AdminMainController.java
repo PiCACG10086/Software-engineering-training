@@ -7,10 +7,15 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.layout.VBox;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.stage.Stage;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URL;
 import java.text.SimpleDateFormat;
@@ -606,12 +611,17 @@ public class AdminMainController extends BaseController implements Initializable
     
     @FXML
     private void handleAddUser() {
-        showInfoAlert("功能提示", "添加用户功能待实现");
+        showUserDialog(null);
     }
     
     @FXML
     private void handleEditUser() {
-        showInfoAlert("功能提示", "编辑用户功能待实现");
+        User selectedUser = userTable.getSelectionModel().getSelectedItem();
+        if (selectedUser == null) {
+            showWarningAlert("请选择用户", "请先选择要编辑的用户");
+            return;
+        }
+        showUserDialog(selectedUser);
     }
     
     @FXML
@@ -665,7 +675,7 @@ public class AdminMainController extends BaseController implements Initializable
     
     @FXML
     private void handleChangePassword() {
-        showInfoAlert("功能提示", "修改密码功能待实现");
+        showChangePasswordDialog();
     }
     
 
@@ -773,6 +783,257 @@ public class AdminMainController extends BaseController implements Initializable
         alert.setContentText(sb.toString());
         alert.getDialogPane().setPrefWidth(400);
         alert.showAndWait();
+    }
+    
+    /**
+     * 显示用户添加/编辑对话框
+     */
+    private void showUserDialog(User user) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/user_dialog.fxml"));
+            VBox dialogContent = loader.load();
+            
+            // 获取对话框中的控件
+            TextField usernameField = (TextField) dialogContent.lookup("#usernameField");
+            TextField nameField = (TextField) dialogContent.lookup("#nameField");
+            ComboBox<String> roleComboBox = (ComboBox<String>) dialogContent.lookup("#roleComboBox");
+            TextField studentIdField = (TextField) dialogContent.lookup("#studentIdField");
+            PasswordField passwordField = (PasswordField) dialogContent.lookup("#passwordField");
+            Button saveButton = (Button) dialogContent.lookup("#saveButton");
+            Button cancelButton = (Button) dialogContent.lookup("#cancelButton");
+            
+            // 初始化角色选择框
+            roleComboBox.getItems().addAll("STUDENT", "ADMIN");
+            
+            // 创建对话框
+            Dialog<ButtonType> dialog = new Dialog<>();
+            dialog.setTitle(user == null ? "添加用户" : "编辑用户");
+            dialog.getDialogPane().setContent(dialogContent);
+            dialog.getDialogPane().getButtonTypes().addAll(ButtonType.CANCEL);
+            
+            // 隐藏默认的取消按钮
+            dialog.getDialogPane().lookupButton(ButtonType.CANCEL).setVisible(false);
+            
+            // 设置对话框结果转换器
+            dialog.setResultConverter(dialogButton -> {
+                return null;
+            });
+            
+            // 如果是编辑模式，填充现有数据
+            if (user != null) {
+                usernameField.setText(user.getUsername());
+                usernameField.setEditable(false); // 编辑时不允许修改用户名
+                nameField.setText(user.getName());
+                roleComboBox.setValue(user.getRole().toString());
+                studentIdField.setText(user.getStudentId());
+                passwordField.setPromptText("留空则不修改密码");
+            } else {
+                roleComboBox.setValue("STUDENT"); // 默认选择学生角色
+            }
+            
+            // 角色变化时控制学号字段的可见性
+            roleComboBox.setOnAction(e -> {
+                boolean isStudent = "STUDENT".equals(roleComboBox.getValue());
+                studentIdField.setDisable(!isStudent);
+                if (!isStudent) {
+                    studentIdField.clear();
+                }
+            });
+            
+            // 初始化学号字段状态
+            boolean isStudent = "STUDENT".equals(roleComboBox.getValue());
+            studentIdField.setDisable(!isStudent);
+            
+            // 保存按钮事件
+            saveButton.setOnAction(e -> {
+                if (validateUserForm(usernameField, nameField, roleComboBox, studentIdField, passwordField, user == null)) {
+                    try {
+                        User newUser = createUserFromForm(usernameField, nameField, roleComboBox, studentIdField, passwordField);
+                        boolean success;
+                        
+                        if (user == null) {
+                            // 添加新用户
+                            success = userService.addUser(newUser);
+                        } else {
+                            // 更新用户
+                            newUser.setId(user.getId());
+                            newUser.setUsername(user.getUsername()); // 保持原用户名
+                            if (passwordField.getText().trim().isEmpty()) {
+                                newUser.setPassword(user.getPassword()); // 保持原密码
+                            }
+                            success = userService.updateUser(newUser);
+                        }
+                        
+                        if (success) {
+                            loadUsers();
+                            loadStatistics();
+                            dialog.close();
+                            showInfoAlert("保存成功", "用户信息已保存");
+                        } else {
+                            showErrorAlert("保存失败", "保存用户信息失败，请重试");
+                        }
+                    } catch (Exception ex) {
+                        showErrorAlert("保存失败", "保存用户信息失败：" + ex.getMessage());
+                    }
+                }
+            });
+            
+            // 取消按钮事件
+            cancelButton.setOnAction(e -> dialog.close());
+            
+            dialog.showAndWait();
+            
+        } catch (Exception e) {
+            showErrorAlert("加载失败", "加载用户对话框失败：" + e.getMessage());
+        }
+    }
+    
+    /**
+     * 显示修改密码对话框
+     */
+    private void showChangePasswordDialog() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/change_password_dialog.fxml"));
+            VBox dialogContent = loader.load();
+            
+            // 获取对话框中的控件
+            PasswordField currentPasswordField = (PasswordField) dialogContent.lookup("#currentPasswordField");
+            PasswordField newPasswordField = (PasswordField) dialogContent.lookup("#newPasswordField");
+            PasswordField confirmPasswordField = (PasswordField) dialogContent.lookup("#confirmPasswordField");
+            Button changeButton = (Button) dialogContent.lookup("#changeButton");
+            Button cancelButton = (Button) dialogContent.lookup("#cancelButton");
+            
+            // 创建对话框
+            Dialog<ButtonType> dialog = new Dialog<>();
+            dialog.setTitle("修改密码");
+            dialog.getDialogPane().setContent(dialogContent);
+            dialog.getDialogPane().getButtonTypes().addAll(ButtonType.CANCEL);
+            
+            // 隐藏默认的取消按钮
+            dialog.getDialogPane().lookupButton(ButtonType.CANCEL).setVisible(false);
+            
+            // 设置对话框结果转换器
+            dialog.setResultConverter(dialogButton -> {
+                return null;
+            });
+            
+            // 修改按钮事件
+            changeButton.setOnAction(e -> {
+                String currentPassword = currentPasswordField.getText().trim();
+                String newPassword = newPasswordField.getText().trim();
+                String confirmPassword = confirmPasswordField.getText().trim();
+                
+                if (validatePasswordForm(currentPassword, newPassword, confirmPassword)) {
+                    try {
+                        if (userService.changePassword(currentUser.getId(), currentPassword, newPassword)) {
+                            // 先关闭修改密码对话框
+                            dialog.close();
+                            
+                            // 显示成功提示
+                            showInfoAlert("修改成功", "密码已修改成功，请重新登录");
+                            
+                            // 跳转到登录界面并关闭当前主窗口
+                            try {
+                                // 清除当前用户信息
+                                currentUser = null;
+                                
+                                // 获取主窗口（通过主界面控件获取）
+                                 Stage mainStage = (Stage) bookTable.getScene().getWindow();
+                                
+                                // 加载登录界面
+                                FXMLLoader loginLoader = new FXMLLoader(getClass().getResource("/fxml/login.fxml"));
+                                Scene loginScene = new Scene(loginLoader.load(), 400, 300);
+                                
+                                // 切换到登录界面
+                                mainStage.setScene(loginScene);
+                                mainStage.setTitle("用户登录");
+                                mainStage.centerOnScreen();
+                                
+                            } catch (IOException ioEx) {
+                                showErrorAlert("跳转失败", "跳转到登录界面失败：" + ioEx.getMessage());
+                                ioEx.printStackTrace();
+                            }
+                        } else {
+                            showErrorAlert("修改失败", "当前密码不正确或修改失败，请重试");
+                        }
+                    } catch (Exception ex) {
+                        showErrorAlert("修改失败", "修改密码失败：" + ex.getMessage());
+                    }
+                }
+            });
+            
+            // 取消按钮事件
+            cancelButton.setOnAction(e -> dialog.close());
+            
+            dialog.showAndWait();
+            
+        } catch (Exception e) {
+            showErrorAlert("加载失败", "加载修改密码对话框失败：" + e.getMessage());
+        }
+    }
+    
+    /**
+     * 验证用户表单
+     */
+    private boolean validateUserForm(TextField usernameField, TextField nameField, ComboBox<String> roleComboBox, 
+                                   TextField studentIdField, PasswordField passwordField, boolean isNewUser) {
+        if (!validateNotEmpty(usernameField.getText(), "用户名")) {
+            return false;
+        }
+        if (!validateNotEmpty(nameField.getText(), "姓名")) {
+            return false;
+        }
+        if (roleComboBox.getValue() == null) {
+            showWarningAlert("验证失败", "请选择用户角色");
+            return false;
+        }
+        if ("STUDENT".equals(roleComboBox.getValue()) && !validateNotEmpty(studentIdField.getText(), "学号")) {
+            return false;
+        }
+        if (isNewUser && !validateNotEmpty(passwordField.getText(), "密码")) {
+            return false;
+        }
+        return true;
+    }
+    
+    /**
+     * 从表单创建用户对象
+     */
+    private User createUserFromForm(TextField usernameField, TextField nameField, ComboBox<String> roleComboBox, 
+                                  TextField studentIdField, PasswordField passwordField) {
+        User user = new User();
+        user.setUsername(usernameField.getText().trim());
+        user.setName(nameField.getText().trim());
+        user.setRole(User.UserRole.valueOf(roleComboBox.getValue()));
+        user.setStudentId("STUDENT".equals(roleComboBox.getValue()) ? studentIdField.getText().trim() : null);
+        if (!passwordField.getText().trim().isEmpty()) {
+            user.setPassword(passwordField.getText().trim());
+        }
+        return user;
+    }
+    
+    /**
+     * 验证密码表单
+     */
+    private boolean validatePasswordForm(String currentPassword, String newPassword, String confirmPassword) {
+        if (!validateNotEmpty(currentPassword, "当前密码")) {
+            return false;
+        }
+        if (!validateNotEmpty(newPassword, "新密码")) {
+            return false;
+        }
+        if (!validateNotEmpty(confirmPassword, "确认密码")) {
+            return false;
+        }
+        if (!newPassword.equals(confirmPassword)) {
+            showWarningAlert("验证失败", "新密码和确认密码不一致");
+            return false;
+        }
+        if (newPassword.length() < 6) {
+            showWarningAlert("验证失败", "新密码长度不能少于6位");
+            return false;
+        }
+        return true;
     }
     
     /**
