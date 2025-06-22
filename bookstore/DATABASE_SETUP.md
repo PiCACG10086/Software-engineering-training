@@ -35,14 +35,34 @@
 
 ✅ **应用程序编译成功**
 ✅ **JavaFX运行时配置正确**
-❌ **数据库连接失败** - 需要设置MySQL数据库
+✅ **数据库连接成功**
+✅ **已移除 MD5 密码加密，现在使用明文密码**
+
+## 密码说明
+
+**重要更新**: 系统已移除 MD5 密码加密，现在使用明文密码存储和验证。
+
+### 默认用户账号
+- **管理员**: 用户名 `admin`, 密码 `admin123`
+- **教师**: 用户名 `teacher001/002/003`, 密码 `teacher123`
+- **学生**: 用户名 `student001/002/003`, 密码 `student123`
 
 ## 解决方案
 
-如果不想设置MySQL数据库，可以考虑：
-1. 修改代码使用H2内存数据库进行测试
-2. 使用Docker快速启动MySQL容器
-3. 修改数据库连接配置指向现有的MySQL实例
+### 方案1: 配置现有 MySQL
+如果你已经安装了 MySQL，只需要:
+1. 确保 MySQL 服务正在运行
+2. 创建数据库: `CREATE DATABASE university_bookstore;`
+3. 运行 `database/init.sql` 脚本初始化表和数据
+4. 确认用户权限正确
+
+### 方案2: 使用 Docker (推荐)
+```bash
+docker run --name mysql-bookstore -e MYSQL_ROOT_PASSWORD=123456 -e MYSQL_DATABASE=university_bookstore -p 3306:3306 -d mysql:5.7
+```
+
+### 方案3: 切换到 H2 数据库
+如果不想安装 MySQL，可以修改代码使用 H2 内存数据库进行开发测试。
 
 ## 注意事项
 
