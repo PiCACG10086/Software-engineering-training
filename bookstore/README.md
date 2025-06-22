@@ -6,8 +6,8 @@
 
 ## 技术栈
 
-- **Java**: JDK 1.8
-- **UI框架**: JavaFX 8
+- **Java**: JDK 18
+- **UI框架**: JavaFX 18.0.2
 - **数据库**: MySQL 5.5.40+
 - **连接池**: HikariCP 3.4.5
 - **构建工具**: Maven 3.6+
@@ -93,7 +93,7 @@ bookstore/
 
 ## 环境要求
 
-- JDK 1.8 或更高版本
+- JDK 18 或更高版本
 - MySQL 5.5.40 或更高版本
 - Maven 3.6 或更高版本
 
@@ -102,10 +102,20 @@ bookstore/
 ### 1. 数据库配置
 
 1. 安装MySQL数据库
-2. 创建数据库用户（可选）
-3. 执行数据库初始化脚本：
+2. 启动MySQL服务
+3. 创建数据库：
    ```sql
-   mysql -u root -p < database/init.sql
+   CREATE DATABASE university_bookstore;
+   ```
+4. 执行数据库初始化脚本：
+   ```bash
+   mysql -u root -p university_bookstore < database/init.sql
+   ```
+   
+   或者登录MySQL后执行：
+   ```sql
+   USE university_bookstore;
+   SOURCE database/init.sql;
    ```
 
 ### 2. 配置数据库连接
@@ -113,9 +123,9 @@ bookstore/
 修改 `src/main/java/com/university/bookstore/util/DBUtil.java` 文件中的数据库连接参数：
 
 ```java
-private static final String URL = "jdbc:mysql://localhost:3306/university_bookstore?useSSL=false&serverTimezone=UTC";
-private static final String USERNAME = "root";  // 修改为你的数据库用户名
-private static final String PASSWORD = "password";  // 修改为你的数据库密码
+private static final String DB_URL = "jdbc:mysql://localhost:3306/university_bookstore";
+private static final String DB_USERNAME = "root";  // 修改为你的数据库用户名
+private static final String DB_PASSWORD = "123456";  // 修改为你的数据库密码
 ```
 
 ### 3. 编译和运行
@@ -127,16 +137,18 @@ private static final String PASSWORD = "password";  // 修改为你的数据库�
 
 2. 运行应用程序：
    ```bash
-   mvn exec:java -Dexec.mainClass="com.university.bookstore.BookstoreApplication"
+   mvn javafx:run
    ```
 
-   或者打包后运行：
+   或者先编译再运行：
    ```bash
-   mvn clean package
-   java -jar target/bookstore-1.0-SNAPSHOT.jar
+   mvn clean compile
+   mvn javafx:run
    ```
 
 ## 默认用户账号
+
+**重要更新**: 系统已移除MD5密码加密，现在使用明文密码存储和验证。
 
 系统初始化后会创建以下默认用户：
 
@@ -197,21 +209,36 @@ private static final String PASSWORD = "password";  // 修改为你的数据库�
 
 ### 安全特性
 
-- 密码MD5加密存储
-- 角色权限控制
-- SQL注入防护（使用PreparedStatement）
-- 输入验证和数据校验
+- **密码存储**: 明文密码存储（已移除MD5加密）
+- **角色权限控制**: 支持管理员、教师、学生三种角色
+- **SQL注入防护**: 使用PreparedStatement防止SQL注入
+- **输入验证**: 对用户输入进行数据校验
+
+## 重要更新说明
+
+### 密码加密移除
+
+**版本更新**: 系统已移除MD5密码加密功能，现在使用明文密码存储。
+
+**影响范围**:
+- 用户登录验证改为明文密码比较
+- 数据库中的密码字段存储明文
+- 密码修改、重置功能使用明文处理
+
+**安全提醒**: 此更改仅适用于开发和学习环境，生产环境建议重新启用密码加密。
 
 ## 常见问题
 
 ### 1. 数据库连接失败
 - 检查MySQL服务是否启动
-- 确认数据库连接参数是否正确
+- 确认数据库连接参数是否正确（用户名: root, 密码: 123456）
 - 检查防火墙设置
+- 确保数据库 `university_bookstore` 已创建
 
 ### 2. JavaFX运行时错误
-- 确保使用JDK 1.8（包含JavaFX）
-- 如果使用JDK 11+，需要单独添加JavaFX依赖
+- 项目已配置JavaFX 18.0.2，使用JDK 18
+- 使用 `mvn javafx:run` 命令运行应用程序
+- 确保Maven配置正确
 
 ### 3. 中文乱码问题
 - 确保数据库字符集为UTF-8
