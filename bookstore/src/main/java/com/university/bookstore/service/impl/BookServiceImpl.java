@@ -1,0 +1,266 @@
+package com.university.bookstore.service.impl;
+
+import com.university.bookstore.dao.BookDAO;
+import com.university.bookstore.dao.impl.BookDAOImpl;
+import com.university.bookstore.model.Book;
+import com.university.bookstore.service.BookService;
+
+import java.math.BigDecimal;
+import java.util.List;
+
+/**
+ * 图书业务逻辑服务实现类
+ */
+public class BookServiceImpl implements BookService {
+    
+    private final BookDAO bookDAO;
+    
+    public BookServiceImpl() {
+        this.bookDAO = new BookDAOImpl();
+    }
+    
+    @Override
+    public Book getBookById(Integer id) {
+        if (id == null) {
+            return null;
+        }
+        return bookDAO.findById(id);
+    }
+    
+    @Override
+    public Book getBookByIsbn(String isbn) {
+        if (isbn == null || isbn.trim().isEmpty()) {
+            return null;
+        }
+        return bookDAO.findByIsbn(isbn.trim());
+    }
+    
+    @Override
+    public List<Book> getAllBooks() {
+        return bookDAO.findAll();
+    }
+    
+    @Override
+    public List<Book> getBooksWithPagination(int page, int pageSize) {
+        if (page < 1 || pageSize < 1) {
+            throw new IllegalArgumentException("页码和页面大小必须大于0");
+        }
+        
+        int offset = (page - 1) * pageSize;
+        return bookDAO.findWithPagination(offset, pageSize);
+    }
+    
+    @Override
+    public int getTotalBookCount() {
+        return bookDAO.getTotalCount();
+    }
+    
+    @Override
+    public List<Book> searchBooksByTitle(String title) {
+        if (title == null || title.trim().isEmpty()) {
+            return getAllBooks();
+        }
+        return bookDAO.findByTitleLike(title.trim());
+    }
+    
+    @Override
+    public List<Book> searchBooksByAuthor(String author) {
+        if (author == null || author.trim().isEmpty()) {
+            return getAllBooks();
+        }
+        return bookDAO.findByAuthorLike(author.trim());
+    }
+    
+    @Override
+    public List<Book> searchBooksByPublisher(String publisher) {
+        if (publisher == null || publisher.trim().isEmpty()) {
+            return getAllBooks();
+        }
+        return bookDAO.findByPublisher(publisher.trim());
+    }
+    
+    @Override
+    public List<Book> searchBooks(String keyword) {
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return getAllBooks();
+        }
+        return bookDAO.searchBooks(keyword.trim());
+    }
+    
+    @Override
+    public List<Book> getBooksByCourseId(Integer courseId) {
+        if (courseId == null) {
+            return null;
+        }
+        return bookDAO.findByCourseId(courseId);
+    }
+    
+    @Override
+    public List<Book> getBooksByDepartmentId(Integer departmentId) {
+        if (departmentId == null) {
+            return null;
+        }
+        return bookDAO.findByDepartmentId(departmentId);
+    }
+    
+    @Override
+    public boolean addBook(Book book) {
+        if (book == null) {
+            return false;
+        }
+        
+        // 验证必填字段
+        if (book.getIsbn() == null || book.getIsbn().trim().isEmpty() ||
+            book.getTitle() == null || book.getTitle().trim().isEmpty() ||
+            book.getAuthor() == null || book.getAuthor().trim().isEmpty() ||
+            book.getPublisher() == null || book.getPublisher().trim().isEmpty() ||
+            book.getPrice() == null || book.getPrice().compareTo(BigDecimal.ZERO) <= 0 ||
+            book.getStock() == null || book.getStock() < 0) {
+            return false;
+        }
+        
+        // 检查ISBN是否已存在
+        if (bookDAO.existsByIsbn(book.getIsbn().trim())) {
+            return false;
+        }
+        
+        return bookDAO.insert(book);
+    }
+    
+    @Override
+    public boolean updateBook(Book book) {
+        if (book == null || book.getId() == null) {
+            return false;
+        }
+        
+        // 验证必填字段
+        if (book.getIsbn() == null || book.getIsbn().trim().isEmpty() ||
+            book.getTitle() == null || book.getTitle().trim().isEmpty() ||
+            book.getAuthor() == null || book.getAuthor().trim().isEmpty() ||
+            book.getPublisher() == null || book.getPublisher().trim().isEmpty() ||
+            book.getPrice() == null || book.getPrice().compareTo(BigDecimal.ZERO) <= 0 ||
+            book.getStock() == null || book.getStock() < 0) {
+            return false;
+        }
+        
+        // 检查ISBN是否与其他图书冲突
+        Book existingBook = bookDAO.findByIsbn(book.getIsbn().trim());
+        if (existingBook != null && !existingBook.getId().equals(book.getId())) {
+            return false;
+        }
+        
+        return bookDAO.update(book);
+    }
+    
+    @Override
+    public boolean deleteBook(Integer id) {
+        if (id == null) {
+            return false;
+        }
+        return bookDAO.delete(id);
+    }
+    
+    @Override
+    public boolean updateBookStock(Integer id, Integer stock) {
+        if (id == null || stock == null || stock < 0) {
+            return false;
+        }
+        return bookDAO.updateStock(id, stock);
+    }
+    
+    @Override
+    public boolean reduceBookStock(Integer id, Integer quantity) {
+        if (id == null || quantity == null || quantity <= 0) {
+            return false;
+        }
+        
+        // 检查库存是否充足
+        if (!checkBookStock(id, quantity)) {
+            return false;
+        }
+        
+        return bookDAO.reduceStock(id, quantity);
+    }
+    
+    @Override
+    public boolean addBookStock(Integer id, Integer quantity) {
+        if (id == null || quantity == null || quantity <= 0) {
+            return false;
+        }
+        
+        Book book = bookDAO.findById(id);
+        if (book == null) {
+            return false;
+        }
+        
+        int newStock = book.getStock() + quantity;
+        return bookDAO.updateStock(id, newStock);
+    }
+    
+    @Override
+    public boolean checkBookStock(Integer id, Integer quantity) {
+        if (id == null || quantity == null || quantity <= 0) {
+            return false;
+        }
+        
+        Book book = bookDAO.findById(id);
+        if (book == null) {
+            return false;
+        }
+        
+        return book.getStock() >= quantity;
+    }
+    
+    @Override
+    public List<Book> getLowStockBooks(Integer threshold) {
+        if (threshold == null || threshold < 0) {
+            threshold = 10; // 默认阈值
+        }
+        return bookDAO.findLowStockBooks(threshold);
+    }
+    
+    @Override
+    public boolean isIsbnExists(String isbn) {
+        if (isbn == null || isbn.trim().isEmpty()) {
+            return false;
+        }
+        return bookDAO.existsByIsbn(isbn.trim());
+    }
+    
+    @Override
+    public List<Book> searchBooksByPriceRange(BigDecimal minPrice, BigDecimal maxPrice) {
+        if (minPrice == null) {
+            minPrice = BigDecimal.ZERO;
+        }
+        if (maxPrice == null) {
+            maxPrice = new BigDecimal("999999.99");
+        }
+        if (minPrice.compareTo(maxPrice) > 0) {
+            throw new IllegalArgumentException("最低价格不能大于最高价格");
+        }
+        
+        // 创建final变量用于lambda表达式
+        final BigDecimal finalMinPrice = minPrice;
+        final BigDecimal finalMaxPrice = maxPrice;
+        
+        // 这里需要在BookDAO中添加相应的方法
+        // 暂时返回所有图书并在内存中过滤
+        return getAllBooks().stream()
+                .filter(book -> book.getPrice().compareTo(finalMinPrice) >= 0 && 
+                               book.getPrice().compareTo(finalMaxPrice) <= 0)
+                .collect(java.util.stream.Collectors.toList());
+    }
+    
+    @Override
+    public List<Book> getPopularBooks(int limit) {
+        if (limit <= 0) {
+            limit = 10; // 默认返回10本
+        }
+        
+        // 这里需要根据销量排序，暂时返回前N本图书
+        List<Book> allBooks = getAllBooks();
+        return allBooks.stream()
+                .limit(limit)
+                .collect(java.util.stream.Collectors.toList());
+    }
+}
