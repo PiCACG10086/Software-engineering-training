@@ -498,7 +498,12 @@ public class AdminMainController extends BaseController implements Initializable
         if (showConfirmDialog("确认订单", "确定要确认订单 " + selectedOrder.getOrderNumber() + " 吗？")) {
             try {
                 if (orderService.confirmOrder(selectedOrder.getId())) {
+                    // 清空当前选择
+                    orderTable.getSelectionModel().clearSelection();
+                    // 重新加载订单数据
                     loadOrders();
+                    // 刷新表格显示
+                    orderTable.refresh();
                     showInfoAlert("确认成功", "订单已确认");
                 } else {
                     showErrorAlert("确认失败", "确认订单失败，请重试");
@@ -525,7 +530,12 @@ public class AdminMainController extends BaseController implements Initializable
         if (showConfirmDialog("确认发货", "确定要发货订单 " + selectedOrder.getOrderNumber() + " 吗？")) {
             try {
                 if (orderService.shipOrder(selectedOrder.getId())) {
+                    // 清空当前选择
+                    orderTable.getSelectionModel().clearSelection();
+                    // 重新加载订单数据
                     loadOrders();
+                    // 刷新表格显示
+                    orderTable.refresh();
                     showInfoAlert("发货成功", "订单已发货");
                 } else {
                     showErrorAlert("发货失败", "发货失败，请重试");
@@ -552,7 +562,12 @@ public class AdminMainController extends BaseController implements Initializable
         if (showConfirmDialog("确认取消", "确定要取消订单 " + selectedOrder.getOrderNumber() + " 吗？")) {
             try {
                 if (orderService.cancelOrder(selectedOrder.getId(), currentUser.getId())) {
+                    // 清空当前选择
+                    orderTable.getSelectionModel().clearSelection();
+                    // 重新加载订单数据
                     loadOrders();
+                    // 刷新表格显示
+                    orderTable.refresh();
                     showInfoAlert("取消成功", "订单已取消");
                 } else {
                     showErrorAlert("取消失败", "取消订单失败，请重试");
@@ -569,7 +584,12 @@ public class AdminMainController extends BaseController implements Initializable
     @FXML
     private void handleRefreshOrder() {
         try {
+            // 清空当前选择
+            orderTable.getSelectionModel().clearSelection();
+            // 重新加载订单数据
             loadOrders();
+            // 刷新表格显示
+            orderTable.refresh();
             showInfoAlert("刷新成功", "订单列表已刷新");
         } catch (Exception e) {
             showErrorAlert("刷新失败", "刷新订单列表失败：" + e.getMessage());
@@ -792,9 +812,19 @@ public class AdminMainController extends BaseController implements Initializable
         sb.append("购买的图书详情：\n");
         sb.append("=".repeat(50)).append("\n");
         
+        // 调试信息：显示订单详情数量
+        sb.append("订单详情数量：").append(details.size()).append("\n");
+        
+        if (details.isEmpty()) {
+            sb.append("暂无订单详情数据\n");
+        }
+        
         BigDecimal totalAmount = BigDecimal.ZERO;
         for (int i = 0; i < details.size(); i++) {
             OrderDetail detail = details.get(i);
+            // 调试信息：显示订单详情基本信息
+            sb.append("订单详情ID：").append(detail.getId()).append("，图书ID：").append(detail.getBookId()).append("\n");
+            
             Book book = bookService.getBookById(detail.getBookId());
             if (book != null) {
                 sb.append("第").append(i + 1).append("本图书：\n");
@@ -816,13 +846,27 @@ public class AdminMainController extends BaseController implements Initializable
         sb.append("总计：¥").append(totalAmount).append("\n");
         sb.append("共购买 ").append(details.size()).append(" 种图书\n");
         
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("订单详情");
-        alert.setHeaderText("订单 " + order.getOrderNumber() + " 的详细信息");
-        alert.setContentText(sb.toString());
-        alert.getDialogPane().setPrefWidth(600);
-        alert.getDialogPane().setPrefHeight(500);
-        alert.showAndWait();
+        // 创建自定义对话框以支持滚动
+        Dialog<Void> dialog = new Dialog<>();
+        dialog.setTitle("订单详情");
+        dialog.setHeaderText("订单 " + order.getOrderNumber() + " 的详细信息");
+        
+        // 创建文本区域并设置为只读
+        TextArea textArea = new TextArea(sb.toString());
+        textArea.setEditable(false);
+        textArea.setWrapText(true);
+        textArea.setPrefRowCount(20);
+        textArea.setPrefColumnCount(60);
+        
+        // 创建滚动面板
+        ScrollPane scrollPane = new ScrollPane(textArea);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setFitToHeight(true);
+        scrollPane.setPrefSize(650, 500);
+        
+        dialog.getDialogPane().setContent(scrollPane);
+         dialog.getDialogPane().getButtonTypes().add(ButtonType.OK);
+         dialog.showAndWait();
     }
     
     /**

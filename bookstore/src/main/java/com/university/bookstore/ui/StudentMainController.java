@@ -75,6 +75,8 @@ public class StudentMainController extends BaseController implements Initializab
     @FXML
     private TableColumn<Order, String> orderDateColumn;
     @FXML
+    private Button refreshOrderButton;
+    @FXML
     private Button viewOrderDetailsButton;
     @FXML
     private Button cancelOrderButton;
@@ -239,6 +241,7 @@ public class StudentMainController extends BaseController implements Initializab
         removeFromCartButton.setOnAction(event -> handleRemoveFromCart());
         clearCartButton.setOnAction(event -> handleClearCart());
         checkoutButton.setOnAction(event -> handleCheckout());
+        refreshOrderButton.setOnAction(event -> handleRefreshOrder());
         viewOrderDetailsButton.setOnAction(event -> handleViewOrderDetails());
         cancelOrderButton.setOnAction(event -> handleCancelOrder());
         changePasswordButton.setOnAction(event -> handleChangePassword());
@@ -483,9 +486,19 @@ public class StudentMainController extends BaseController implements Initializab
         sb.append("购买的图书详情：\n");
         sb.append("=".repeat(50)).append("\n");
         
+        // 调试信息：显示订单详情数量
+        sb.append("订单详情数量：").append(details.size()).append("\n");
+        
+        if (details.isEmpty()) {
+            sb.append("暂无订单详情数据\n");
+        }
+        
         BigDecimal totalAmount = BigDecimal.ZERO;
         for (int i = 0; i < details.size(); i++) {
             OrderDetail detail = details.get(i);
+            // 调试信息：显示订单详情基本信息
+            sb.append("订单详情ID：").append(detail.getId()).append("，图书ID：").append(detail.getBookId()).append("\n");
+            
             Book book = bookService.getBookById(detail.getBookId());
             if (book != null) {
                 sb.append("第").append(i + 1).append("本图书：\n");
@@ -507,13 +520,36 @@ public class StudentMainController extends BaseController implements Initializab
         sb.append("总计：¥").append(totalAmount).append("\n");
         sb.append("共购买 ").append(details.size()).append(" 种图书\n");
         
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("订单详情");
-        alert.setHeaderText("订单 " + order.getOrderNumber() + " 的详细信息");
-        alert.setContentText(sb.toString());
-        alert.getDialogPane().setPrefWidth(600);
-        alert.getDialogPane().setPrefHeight(500);
-        alert.showAndWait();
+        // 创建自定义对话框以支持滚动
+        Dialog<Void> dialog = new Dialog<>();
+        dialog.setTitle("订单详情");
+        dialog.setHeaderText("订单 " + order.getOrderNumber() + " 的详细信息");
+        
+        // 创建文本区域并设置为只读
+        TextArea textArea = new TextArea(sb.toString());
+        textArea.setEditable(false);
+        textArea.setWrapText(true);
+        textArea.setPrefRowCount(20);
+        textArea.setPrefColumnCount(60);
+        
+        // 创建滚动面板
+        ScrollPane scrollPane = new ScrollPane(textArea);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setFitToHeight(true);
+        scrollPane.setPrefSize(650, 500);
+        
+        dialog.getDialogPane().setContent(scrollPane);
+        dialog.getDialogPane().getButtonTypes().add(ButtonType.OK);
+        dialog.showAndWait();
+    }
+    
+    /**
+     * 处理刷新订单事件
+     */
+    private void handleRefreshOrder() {
+        loadOrders();
+        orderTable.refresh();
+        showInfoAlert("刷新成功", "订单列表已刷新");
     }
     
     /**

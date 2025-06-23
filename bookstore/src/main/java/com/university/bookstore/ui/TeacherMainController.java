@@ -79,6 +79,8 @@ public class TeacherMainController extends BaseController implements Initializab
     @FXML
     private Button orderSearchButton;
     @FXML
+    private Button refreshOrderButton;
+    @FXML
     private Button viewOrderDetailsButton;
     
 
@@ -223,6 +225,7 @@ public class TeacherMainController extends BaseController implements Initializab
         
         // 订单查看按钮事件
         orderSearchButton.setOnAction(event -> handleOrderSearch());
+        refreshOrderButton.setOnAction(event -> handleRefreshOrder());
         viewOrderDetailsButton.setOnAction(event -> handleViewOrderDetails());
         
         // 其他按钮事件
@@ -475,13 +478,36 @@ public class TeacherMainController extends BaseController implements Initializab
         sb.append("总计：¥").append(totalAmount).append("\n");
         sb.append("共购买 ").append(details.size()).append(" 种图书\n");
         
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("订单详情");
-        alert.setHeaderText("订单 " + order.getOrderNumber() + " 的详细信息");
-        alert.setContentText(sb.toString());
-        alert.getDialogPane().setPrefWidth(600);
-        alert.getDialogPane().setPrefHeight(500);
-        alert.showAndWait();
+        // 创建自定义对话框以支持滚动
+        Dialog<Void> dialog = new Dialog<>();
+        dialog.setTitle("订单详情");
+        dialog.setHeaderText("订单 " + order.getOrderNumber() + " 的详细信息");
+        
+        // 创建文本区域并设置为只读
+        TextArea textArea = new TextArea(sb.toString());
+        textArea.setEditable(false);
+        textArea.setWrapText(true);
+        textArea.setPrefRowCount(20);
+        textArea.setPrefColumnCount(60);
+        
+        // 创建滚动面板
+        ScrollPane scrollPane = new ScrollPane(textArea);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setFitToHeight(true);
+        scrollPane.setPrefSize(650, 500);
+        
+        dialog.getDialogPane().setContent(scrollPane);
+        dialog.getDialogPane().getButtonTypes().add(ButtonType.OK);
+        dialog.showAndWait();
+    }
+    
+    /**
+     * 处理刷新订单事件
+     */
+    private void handleRefreshOrder() {
+        loadOrders();
+        orderTable.refresh();
+        showInfoAlert("刷新成功", "订单列表已刷新");
     }
     
     /**

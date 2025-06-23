@@ -429,7 +429,7 @@ public class OrderDAOImpl implements OrderDAO {
         detail.setBookId((int) rs.getLong("book_id"));
         detail.setQuantity(rs.getInt("quantity"));
         detail.setUnitPrice(rs.getBigDecimal("unit_price"));
-        detail.setSubtotal(rs.getBigDecimal("subtotal"));
+        // subtotal通过getSubtotal()方法计算得出，不从数据库读取
         return detail;
     }
 }
