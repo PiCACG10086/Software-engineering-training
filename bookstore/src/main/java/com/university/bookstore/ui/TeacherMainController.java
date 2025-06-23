@@ -431,33 +431,56 @@ public class TeacherMainController extends BaseController implements Initializab
     
     /**
      * 显示订单详情对话框
+     * @param order 订单对象
+     * @param details 订单详情列表
      */
     private void showOrderDetailsDialog(Order order, List<OrderDetail> details) {
         StringBuilder sb = new StringBuilder();
         sb.append("订单号：").append(order.getOrderNumber()).append("\n");
         
         User student = userService.getUserById(order.getStudentId());
-        sb.append("学生：").append(student != null ? student.getName() : "未知").append("\n");
+        sb.append("学生姓名：").append(student != null ? student.getName() : "未知").append("\n");
+        sb.append("学生用户名：").append(student != null ? student.getUsername() : "未知").append("\n");
+        if (student != null && student.getStudentId() != null) {
+            sb.append("学号：").append(student.getStudentId()).append("\n");
+        }
         
         sb.append("订单状态：").append(formatOrderStatus(order.getStatus())).append("\n");
         sb.append("下单时间：").append(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(order.getCreateTime())).append("\n");
         sb.append("订单总价：¥").append(order.getTotalPrice()).append("\n\n");
-        sb.append("订单详情：\n");
+        sb.append("购买的图书详情：\n");
+        sb.append("=".repeat(50)).append("\n");
         
-        for (OrderDetail detail : details) {
+        BigDecimal totalAmount = BigDecimal.ZERO;
+        for (int i = 0; i < details.size(); i++) {
+            OrderDetail detail = details.get(i);
             Book book = bookService.getBookById(detail.getBookId());
             if (book != null) {
-                sb.append("- ").append(book.getTitle())
-                  .append(" × ").append(detail.getQuantity())
-                  .append(" = ¥").append(detail.getSubtotal()).append("\n");
+                sb.append("第").append(i + 1).append("本图书：\n");
+                sb.append("  书名：").append(book.getTitle()).append("\n");
+                sb.append("  作者：").append(book.getAuthor()).append("\n");
+                sb.append("  出版社：").append(book.getPublisher()).append("\n");
+                sb.append("  ISBN：").append(book.getIsbn()).append("\n");
+                sb.append("  单价：¥").append(detail.getUnitPrice()).append("\n");
+                sb.append("  购买数量：").append(detail.getQuantity()).append("本\n");
+                sb.append("  小计：¥").append(detail.getSubtotal()).append("\n");
+                if (i < details.size() - 1) {
+                    sb.append("-".repeat(30)).append("\n");
+                }
+                totalAmount = totalAmount.add(detail.getSubtotal());
             }
         }
         
+        sb.append("=".repeat(50)).append("\n");
+        sb.append("总计：¥").append(totalAmount).append("\n");
+        sb.append("共购买 ").append(details.size()).append(" 种图书\n");
+        
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("订单详情");
-        alert.setHeaderText(null);
+        alert.setHeaderText("订单 " + order.getOrderNumber() + " 的详细信息");
         alert.setContentText(sb.toString());
-        alert.getDialogPane().setPrefWidth(400);
+        alert.getDialogPane().setPrefWidth(600);
+        alert.getDialogPane().setPrefHeight(500);
         alert.showAndWait();
     }
     

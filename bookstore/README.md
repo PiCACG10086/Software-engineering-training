@@ -99,6 +99,245 @@ bookstore/
 
 ## 安装和运行
 
+## IDE部署指南
+
+### IntelliJ IDEA 部署指南
+
+#### 1. 环境准备
+- 安装 IntelliJ IDEA 2020.3 或更高版本
+- 确保已安装 JDK 1.8（项目使用JDK 1.8）
+- 安装 Maven 3.6+ 或使用IDEA内置Maven
+- 安装 MySQL 5.5.40+
+
+#### 2. 导入项目
+1. 打开 IntelliJ IDEA
+2. 选择 `File` → `Open` 或 `Import Project`
+3. 选择项目根目录 `bookstore` 文件夹
+4. 选择 `Import project from external model` → `Maven`
+5. 点击 `Next`，保持默认设置
+6. 等待Maven依赖下载完成
+
+#### 3. 配置项目SDK
+1. 打开 `File` → `Project Structure` (Ctrl+Alt+Shift+S)
+2. 在 `Project` 选项卡中：
+   - `Project SDK`: 选择 JDK 1.8
+   - `Project language level`: 选择 `8 - Lambdas, type annotations etc.`
+3. 在 `Modules` 选项卡中确认模块SDK为JDK 1.8
+4. 点击 `Apply` 和 `OK`
+
+#### 4. 配置Maven
+1. 打开 `File` → `Settings` (Ctrl+Alt+S)
+2. 导航到 `Build, Execution, Deployment` → `Build Tools` → `Maven`
+3. 确认Maven配置：
+   - `Maven home directory`: 使用IDEA内置Maven或指定本地Maven路径
+   - `User settings file`: 可选择自定义settings.xml
+   - `Local repository`: 确认本地仓库路径
+4. 在 `Maven` → `Importing` 中：
+   - 勾选 `Import Maven projects automatically`
+   - 勾选 `Automatically download sources and documentation`
+
+#### 5. 配置数据库连接
+1. 在IDEA中打开 `src/main/java/com/university/bookstore/util/DBUtil.java`
+2. 修改数据库连接参数：
+   ```java
+   private static final String DB_URL = "jdbc:mysql://localhost:3306/university_bookstore";
+   private static final String DB_USERNAME = "root";  // 你的数据库用户名
+   private static final String DB_PASSWORD = "123456";  // 你的数据库密码
+   ```
+
+#### 6. 运行配置
+
+**方法一：使用Maven运行配置（推荐）**
+1. 打开 `Run` → `Edit Configurations`
+2. 点击 `+` → `Maven`
+3. 配置如下：
+   - `Name`: JavaFX Run
+   - `Working directory`: 项目根目录
+   - `Command line`: `javafx:run`
+4. 点击 `Apply` 和 `OK`
+5. 点击运行按钮或按 `Shift+F10`
+
+**方法二：使用Application运行配置**
+1. 打开 `Run` → `Edit Configurations`
+2. 点击 `+` → `Application`
+3. 配置如下：
+   - `Name`: Bookstore App
+   - `Main class`: `com.university.bookstore.Launcher`
+   - `VM options`: `--module-path "path/to/javafx/lib" --add-modules javafx.controls,javafx.fxml`
+   - `Working directory`: 项目根目录
+4. 点击 `Apply` 和 `OK`
+
+#### 7. 调试配置
+1. 在代码中设置断点
+2. 使用 `Debug` 模式运行配置
+3. 使用IDEA的调试工具进行代码调试
+
+#### 8. 常见问题解决
+
+**问题1：JavaFX运行时组件缺失**
+- 解决方案：使用Maven运行 `mvn javafx:run`
+- 或者在VM options中添加JavaFX模块路径
+
+**问题2：编码问题**
+1. 打开 `File` → `Settings` → `Editor` → `File Encodings`
+2. 设置所有编码为 `UTF-8`
+
+**问题3：Maven依赖下载失败**
+1. 检查网络连接
+2. 尝试使用国内Maven镜像
+3. 在 `pom.xml` 中添加阿里云镜像配置
+
+### Visual Studio Code 部署指南
+
+#### 1. 环境准备
+- 安装 Visual Studio Code 最新版本
+- 安装 JDK 1.8
+- 安装 Maven 3.6+
+- 安装 MySQL 5.5.40+
+
+#### 2. 安装必要扩展
+在VSCode扩展市场中安装以下扩展：
+1. **Extension Pack for Java** (Microsoft) - Java开发必备扩展包
+   - Language Support for Java(TM) by Red Hat
+   - Debugger for Java
+   - Test Runner for Java
+   - Maven for Java
+   - Project Manager for Java
+   - Visual Studio IntelliCode
+
+2. **JavaFX Support** - JavaFX开发支持
+   - 搜索并安装 "JavaFX" 相关扩展
+
+#### 3. 打开项目
+1. 启动 VSCode
+2. 选择 `File` → `Open Folder`
+3. 选择项目根目录 `bookstore` 文件夹
+4. VSCode会自动识别Maven项目并开始初始化
+
+#### 4. 配置Java环境
+1. 按 `Ctrl+Shift+P` 打开命令面板
+2. 输入 `Java: Configure Java Runtime`
+3. 确认JDK 1.8路径配置正确
+4. 如需修改，点击 `File` → `Preferences` → `Settings`
+5. 搜索 `java.home` 并设置JDK路径
+
+#### 5. 配置Maven
+1. 打开 `File` → `Preferences` → `Settings`
+2. 搜索 `maven`
+3. 配置以下设置：
+   - `Java › Configuration › Maven › User Settings`: 指定Maven settings.xml路径（可选）
+   - `Maven › Executable › Path`: 指定Maven可执行文件路径（如果不使用内置Maven）
+
+#### 6. 项目构建
+1. 按 `Ctrl+Shift+P` 打开命令面板
+2. 输入 `Java: Reload Projects` 重新加载项目
+3. 或者在终端中运行：
+   ```bash
+   mvn clean compile
+   ```
+
+#### 7. 配置数据库连接
+1. 在VSCode中打开 `src/main/java/com/university/bookstore/util/DBUtil.java`
+2. 修改数据库连接参数：
+   ```java
+   private static final String DB_URL = "jdbc:mysql://localhost:3306/university_bookstore";
+   private static final String DB_USERNAME = "root";  // 你的数据库用户名
+   private static final String DB_PASSWORD = "123456";  // 你的数据库密码
+   ```
+
+#### 8. 运行配置
+
+**方法一：使用集成终端运行Maven命令（推荐）**
+1. 按 `Ctrl+`` 打开集成终端
+2. 运行以下命令：
+   ```bash
+   mvn javafx:run
+   ```
+
+**方法二：配置launch.json**
+1. 在项目根目录创建 `.vscode` 文件夹（如果不存在）
+2. 在 `.vscode` 文件夹中创建 `launch.json` 文件：
+   ```json
+   {
+       "version": "0.2.0",
+       "configurations": [
+           {
+               "type": "java",
+               "name": "Launch Bookstore App",
+               "request": "launch",
+               "mainClass": "com.university.bookstore.Launcher",
+               "projectName": "bookstore",
+               "vmArgs": "--module-path \"path/to/javafx/lib\" --add-modules javafx.controls,javafx.fxml"
+           }
+       ]
+   }
+   ```
+3. 按 `F5` 或点击运行按钮启动应用
+
+**方法三：使用tasks.json配置Maven任务**
+1. 在 `.vscode` 文件夹中创建 `tasks.json` 文件：
+   ```json
+   {
+       "version": "2.0.0",
+       "tasks": [
+           {
+               "label": "maven-javafx-run",
+               "type": "shell",
+               "command": "mvn",
+               "args": ["javafx:run"],
+               "group": {
+                   "kind": "build",
+                   "isDefault": true
+               },
+               "presentation": {
+                   "echo": true,
+                   "reveal": "always",
+                   "focus": false,
+                   "panel": "shared"
+               },
+               "problemMatcher": []
+           }
+       ]
+   }
+   ```
+2. 按 `Ctrl+Shift+P` 输入 `Tasks: Run Task`
+3. 选择 `maven-javafx-run` 任务
+
+#### 9. 调试配置
+1. 在代码中设置断点（点击行号左侧）
+2. 按 `F5` 启动调试模式
+3. 使用VSCode的调试面板进行代码调试
+
+#### 10. 常见问题解决
+
+**问题1：Java扩展无法正常工作**
+- 解决方案：重新安装Java扩展包，确保JDK路径配置正确
+
+**问题2：Maven依赖无法解析**
+1. 按 `Ctrl+Shift+P` 输入 `Java: Reload Projects`
+2. 或在终端运行 `mvn clean install`
+
+**问题3：JavaFX运行时错误**
+- 使用Maven命令运行：`mvn javafx:run`
+- 确保JavaFX依赖正确配置
+
+**问题4：中文显示乱码**
+1. 打开 `File` → `Preferences` → `Settings`
+2. 搜索 `encoding` 设置为 `UTF-8`
+
+#### 11. 推荐的VSCode设置
+在 `.vscode/settings.json` 中添加以下配置：
+```json
+{
+    "java.configuration.updateBuildConfiguration": "automatic",
+    "java.compile.nullAnalysis.mode": "automatic",
+    "java.format.settings.url": "https://raw.githubusercontent.com/google/styleguide/gh-pages/eclipse-java-google-style.xml",
+    "files.encoding": "utf8",
+    "java.saveActions.organizeImports": true,
+    "editor.formatOnSave": true
+}
+```
+
 ### 1. 数据库配置
 
 1. 安装MySQL数据库

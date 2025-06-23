@@ -31,7 +31,6 @@ com\university\bookstore\ui\BaseController$1.class
 com\university\bookstore\model\Book.class
 com\university\bookstore\ui\StudentMainController$2.class
 com\university\bookstore\ui\StudentMainController.class
-com\university\bookstore\ui\TeacherMainController$3.class
 com\university\bookstore\ui\RegisterController.class
 com\university\bookstore\dao\impl\UserDAOImpl.class
 com\university\bookstore\service\impl\BookServiceImpl.class

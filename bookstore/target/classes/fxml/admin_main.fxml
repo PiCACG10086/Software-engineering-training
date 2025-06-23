@@ -128,10 +128,12 @@
                               <TextField fx:id="orderSearchField" prefWidth="200.0" promptText="输入订单号" />
                               <Button fx:id="orderSearchButton" mnemonicParsing="false" text="搜索" />
                               <Region HBox.hgrow="ALWAYS" />
+                              <Button fx:id="refreshOrderButton" mnemonicParsing="false" style="-fx-background-color: #9C27B0; -fx-text-fill: white;" text="刷新" />
                               <Button fx:id="viewOrderDetailsButton" mnemonicParsing="false" style="-fx-background-color: #2196F3; -fx-text-fill: white;" text="查看详情" />
                               <Button fx:id="confirmOrderButton" mnemonicParsing="false" style="-fx-background-color: #4CAF50; -fx-text-fill: white;" text="确认订单" />
                               <Button fx:id="shipOrderButton" mnemonicParsing="false" style="-fx-background-color: #FF9800; -fx-text-fill: white;" text="发货" />
                               <Button fx:id="cancelOrderButton" mnemonicParsing="false" style="-fx-background-color: #F44336; -fx-text-fill: white;" text="取消订单" />
+                              <Button fx:id="deleteOrderButton" mnemonicParsing="false" style="-fx-background-color: #795548; -fx-text-fill: white;" text="删除订单" />
                            </HBox>
                            <padding>
                               <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
