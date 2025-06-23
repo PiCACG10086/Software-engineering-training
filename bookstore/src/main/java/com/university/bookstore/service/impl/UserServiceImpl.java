@@ -42,7 +42,7 @@ public class UserServiceImpl implements UserService {
             return null;
         }
         
-        // 直接使用明文密码验证用户（自动识别角色）
+        // 直接使用明文密码验证用户，不限制角色
         return userDAO.findByUsernameAndPassword(username, password);
     }
     
@@ -65,11 +65,6 @@ public class UserServiceImpl implements UserService {
         return userDAO.insert(user);
     }
     
-    /**
-     * 添加用户（管理员功能）
-     * @param user 用户对象
-     * @return 添加成功返回true，否则返回false
-     */
     @Override
     public boolean addUser(User user) {
         if (user == null || user.getUsername() == null || user.getPassword() == null) {
