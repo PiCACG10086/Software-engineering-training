@@ -122,19 +122,7 @@ public class AdminMainController extends BaseController implements Initializable
     @FXML
     private Button resetPasswordButton;
     
-    // 统计信息相关控件
-    @FXML
-    private Label totalBooksLabel;
-    @FXML
-    private Label totalUsersLabel;
-    @FXML
-    private Label totalOrdersLabel;
-    @FXML
-    private Label pendingOrdersLabel;
-    @FXML
-    private Label todayOrdersLabel;
-    @FXML
-    private Label lowStockBooksLabel;
+
     
     // 个人信息相关控件
     @FXML
@@ -178,7 +166,6 @@ public class AdminMainController extends BaseController implements Initializable
         if (currentUser != null) {
             adminUsernameLabel.setText(currentUser.getUsername());
             adminNameLabel.setText(currentUser.getName());
-            loadStatistics();
         }
     }
     
@@ -314,7 +301,6 @@ public class AdminMainController extends BaseController implements Initializable
         loadBooks();
         loadOrders();
         loadUsers();
-        loadStatistics();
     }
     
     /**
@@ -353,21 +339,7 @@ public class AdminMainController extends BaseController implements Initializable
         }
     }
     
-    /**
-     * 加载统计信息
-     */
-    private void loadStatistics() {
-        try {
-            totalBooksLabel.setText(String.valueOf(bookService.getTotalBookCount()));
-            totalUsersLabel.setText(String.valueOf(userService.getAllUsers().size()));
-            totalOrdersLabel.setText(String.valueOf(orderService.getTotalOrderCount()));
-            pendingOrdersLabel.setText(String.valueOf(orderService.getPendingOrderCount()));
-            todayOrdersLabel.setText(String.valueOf(orderService.getTodayOrderCount()));
-            lowStockBooksLabel.setText(String.valueOf(bookService.getLowStockBooks(10).size()));
-        } catch (Exception e) {
-            showErrorAlert("加载失败", "加载统计信息失败：" + e.getMessage());
-        }
-    }
+
     
     // 图书管理相关方法
     
@@ -523,7 +495,6 @@ public class AdminMainController extends BaseController implements Initializable
             try {
                 if (orderService.confirmOrder(selectedOrder.getId())) {
                     loadOrders();
-                    loadStatistics();
                     showInfoAlert("确认成功", "订单已确认");
                 } else {
                     showErrorAlert("确认失败", "确认订单失败，请重试");
@@ -551,7 +522,6 @@ public class AdminMainController extends BaseController implements Initializable
             try {
                 if (orderService.shipOrder(selectedOrder.getId())) {
                     loadOrders();
-                    loadStatistics();
                     showInfoAlert("发货成功", "订单已发货");
                 } else {
                     showErrorAlert("发货失败", "发货失败，请重试");
@@ -579,7 +549,6 @@ public class AdminMainController extends BaseController implements Initializable
             try {
                 if (orderService.cancelOrder(selectedOrder.getId(), currentUser.getId())) {
                     loadOrders();
-                    loadStatistics();
                     showInfoAlert("取消成功", "订单已取消");
                 } else {
                     showErrorAlert("取消失败", "取消订单失败，请重试");
@@ -641,7 +610,6 @@ public class AdminMainController extends BaseController implements Initializable
             try {
                 if (userService.deleteUser(selectedUser.getId())) {
                     loadUsers();
-                    loadStatistics();
                     showInfoAlert("删除成功", "用户已删除");
                 } else {
                     showErrorAlert("删除失败", "删除用户失败，请重试");
@@ -803,7 +771,7 @@ public class AdminMainController extends BaseController implements Initializable
             Button cancelButton = (Button) dialogContent.lookup("#cancelButton");
             
             // 初始化角色选择框
-            roleComboBox.getItems().addAll("STUDENT", "ADMIN");
+            roleComboBox.getItems().addAll("STUDENT", "TEACHER", "ADMIN");
             
             // 创建对话框
             Dialog<ButtonType> dialog = new Dialog<>();
@@ -866,7 +834,6 @@ public class AdminMainController extends BaseController implements Initializable
                         
                         if (success) {
                             loadUsers();
-                            loadStatistics();
                             dialog.close();
                             showInfoAlert("保存成功", "用户信息已保存");
                         } else {

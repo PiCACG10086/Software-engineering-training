@@ -41,35 +41,7 @@ public class TeacherMainController extends BaseController implements Initializab
     @FXML
     private Button viewBookDetailsButton;
     
-    // 图书推荐相关控件
-    @FXML
-    private TableView<Book> recommendBookTable;
-    @FXML
-    private TableColumn<Book, String> recommendTitleColumn;
-    @FXML
-    private TableColumn<Book, String> recommendAuthorColumn;
-    @FXML
-    private TableColumn<Book, String> recommendPublisherColumn;
-    @FXML
-    private TableColumn<Book, BigDecimal> recommendPriceColumn;
-    @FXML
-    private TextField recommendSearchField;
-    @FXML
-    private Button recommendSearchButton;
-    @FXML
-    private Button addRecommendButton;
-    @FXML
-    private Button removeRecommendButton;
-    
-    // 推荐图书表单
-    @FXML
-    private TextField courseNameField;
-    @FXML
-    private TextArea recommendReasonArea;
-    @FXML
-    private Button saveRecommendButton;
-    @FXML
-    private Button cancelRecommendButton;
+
     
     // 学生管理相关控件
     @FXML
@@ -109,15 +81,7 @@ public class TeacherMainController extends BaseController implements Initializab
     @FXML
     private Button viewOrderDetailsButton;
     
-    // 统计信息相关控件
-    @FXML
-    private Label totalStudentsLabel;
-    @FXML
-    private Label totalOrdersLabel;
-    @FXML
-    private Label todayOrdersLabel;
-    @FXML
-    private Label recommendedBooksLabel;
+
     
     // 个人信息相关控件
     @FXML
@@ -134,8 +98,7 @@ public class TeacherMainController extends BaseController implements Initializab
     private OrderService orderService;
     private UserService userService;
     
-    // 当前选择的图书（用于推荐）
-    private Book selectedBookForRecommend;
+
     
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -146,7 +109,7 @@ public class TeacherMainController extends BaseController implements Initializab
         
         // 初始化表格
         initializeBookTable();
-        initializeRecommendBookTable();
+
         initializeStudentTable();
         initializeOrderTable();
         
@@ -162,7 +125,6 @@ public class TeacherMainController extends BaseController implements Initializab
         if (currentUser != null) {
             teacherUsernameLabel.setText(currentUser.getUsername());
             teacherNameLabel.setText(currentUser.getName());
-            loadStatistics();
         }
     }
     
@@ -190,34 +152,7 @@ public class TeacherMainController extends BaseController implements Initializab
         });
     }
     
-    /**
-     * 初始化推荐图书表格
-     */
-    private void initializeRecommendBookTable() {
-        recommendTitleColumn.setCellValueFactory(new PropertyValueFactory<>("title"));
-        recommendAuthorColumn.setCellValueFactory(new PropertyValueFactory<>("author"));
-        recommendPublisherColumn.setCellValueFactory(new PropertyValueFactory<>("publisher"));
-        recommendPriceColumn.setCellValueFactory(new PropertyValueFactory<>("price"));
-        
-        // 设置价格格式
-        recommendPriceColumn.setCellFactory(column -> new TableCell<Book, BigDecimal>() {
-            @Override
-            protected void updateItem(BigDecimal price, boolean empty) {
-                super.updateItem(price, empty);
-                if (empty || price == null) {
-                    setText(null);
-                } else {
-                    setText(String.format("¥%.2f", price));
-                }
-            }
-        });
-        
-        // 设置选择事件
-        recommendBookTable.getSelectionModel().selectedItemProperty().addListener(
-            (obs, oldSelection, newSelection) -> {
-                selectedBookForRecommend = newSelection;
-            });
-    }
+
     
     /**
      * 初始化学生表格
@@ -280,11 +215,7 @@ public class TeacherMainController extends BaseController implements Initializab
         viewBookDetailsButton.setOnAction(event -> handleViewBookDetails());
         
         // 图书推荐按钮事件
-        recommendSearchButton.setOnAction(event -> handleRecommendSearch());
-        addRecommendButton.setOnAction(event -> handleAddRecommend());
-        removeRecommendButton.setOnAction(event -> handleRemoveRecommend());
-        saveRecommendButton.setOnAction(event -> handleSaveRecommend());
-        cancelRecommendButton.setOnAction(event -> handleCancelRecommend());
+
         
         // 学生管理按钮事件
         studentSearchButton.setOnAction(event -> handleStudentSearch());
@@ -300,12 +231,12 @@ public class TeacherMainController extends BaseController implements Initializab
         
         // 设置回车搜索
         bookSearchField.setOnAction(event -> handleBookSearch());
-        recommendSearchField.setOnAction(event -> handleRecommendSearch());
+
         studentSearchField.setOnAction(event -> handleStudentSearch());
         orderSearchField.setOnAction(event -> handleOrderSearch());
         
         // 初始化推荐表单状态
-        setRecommendFormVisible(false);
+
     }
     
     /**
@@ -313,10 +244,9 @@ public class TeacherMainController extends BaseController implements Initializab
      */
     private void loadAllData() {
         loadBooks();
-        loadRecommendedBooks();
+
         loadStudents();
         loadOrders();
-        loadStatistics();
     }
     
     /**
@@ -331,18 +261,7 @@ public class TeacherMainController extends BaseController implements Initializab
         }
     }
     
-    /**
-     * 加载推荐图书数据
-     */
-    private void loadRecommendedBooks() {
-        try {
-            // 这里应该加载教师推荐的图书，暂时显示所有图书
-            List<Book> books = bookService.getAllBooks();
-            recommendBookTable.setItems(FXCollections.observableArrayList(books));
-        } catch (Exception e) {
-            showErrorAlert("加载失败", "加载推荐图书数据失败：" + e.getMessage());
-        }
-    }
+
     
     /**
      * 加载学生数据
@@ -368,19 +287,7 @@ public class TeacherMainController extends BaseController implements Initializab
         }
     }
     
-    /**
-     * 加载统计信息
-     */
-    private void loadStatistics() {
-        try {
-            totalStudentsLabel.setText(String.valueOf(userService.getAllStudents().size()));
-            totalOrdersLabel.setText(String.valueOf(orderService.getTotalOrderCount()));
-            todayOrdersLabel.setText(String.valueOf(orderService.getTodayOrderCount()));
-            recommendedBooksLabel.setText("0"); // 暂时设为0，需要实现推荐功能
-        } catch (Exception e) {
-            showErrorAlert("加载失败", "加载统计信息失败：" + e.getMessage());
-        }
-    }
+
     
     // 图书浏览相关方法
     
@@ -411,58 +318,7 @@ public class TeacherMainController extends BaseController implements Initializab
         showBookDetailsDialog(selectedBook);
     }
     
-    // 图书推荐相关方法
-    
-    @FXML
-    private void handleRecommendSearch() {
-        String keyword = recommendSearchField.getText().trim();
-        try {
-            List<Book> books;
-            if (keyword.isEmpty()) {
-                books = bookService.getAllBooks();
-            } else {
-                books = bookService.searchBooks(keyword);
-            }
-            recommendBookTable.setItems(FXCollections.observableArrayList(books));
-        } catch (Exception e) {
-            showErrorAlert("搜索失败", "搜索图书失败：" + e.getMessage());
-        }
-    }
-    
-    @FXML
-    private void handleAddRecommend() {
-        Book selectedBook = recommendBookTable.getSelectionModel().getSelectedItem();
-        if (selectedBook == null) {
-            showWarningAlert("请选择图书", "请先选择要推荐的图书");
-            return;
-        }
-        
-        selectedBookForRecommend = selectedBook;
-        setRecommendFormVisible(true);
-        courseNameField.clear();
-        recommendReasonArea.clear();
-    }
-    
-    @FXML
-    private void handleRemoveRecommend() {
-        showInfoAlert("功能提示", "移除推荐功能待实现");
-    }
-    
-    @FXML
-    private void handleSaveRecommend() {
-        if (!validateRecommendForm()) {
-            return;
-        }
-        
-        // 这里应该保存推荐信息到数据库
-        showInfoAlert("推荐成功", "图书推荐已保存");
-        setRecommendFormVisible(false);
-    }
-    
-    @FXML
-    private void handleCancelRecommend() {
-        setRecommendFormVisible(false);
-    }
+
     
     // 学生管理相关方法
     
@@ -548,23 +404,7 @@ public class TeacherMainController extends BaseController implements Initializab
     
     // 辅助方法
     
-    /**
-     * 设置推荐表单是否可见
-     */
-    private void setRecommendFormVisible(boolean visible) {
-        courseNameField.setVisible(visible);
-        recommendReasonArea.setVisible(visible);
-        saveRecommendButton.setVisible(visible);
-        cancelRecommendButton.setVisible(visible);
-    }
-    
-    /**
-     * 验证推荐表单
-     */
-    private boolean validateRecommendForm() {
-        return validateNotEmpty(courseNameField.getText(), "课程名称") &&
-               validateNotEmpty(recommendReasonArea.getText(), "推荐理由");
-    }
+
     
     /**
      * 显示图书详情对话框
