@@ -103,6 +103,10 @@ public class AdminMainController extends BaseController implements Initializable
     private Button cancelOrderButton;
     @FXML
     private Button deleteOrderButton;
+    @FXML
+    private ComboBox<String> adminOrderStatusFilter;
+    @FXML
+    private Button adminFilterOrderButton;
     
     // 用户管理相关控件
     @FXML
@@ -282,8 +286,15 @@ public class AdminMainController extends BaseController implements Initializable
         saveBookButton.setOnAction(event -> handleSaveBook());
         cancelBookButton.setOnAction(event -> handleCancelBookEdit());
         
+        // 初始化管理员订单状态筛选下拉框
+        adminOrderStatusFilter.setItems(FXCollections.observableArrayList(
+            "全部订单", "待支付", "已支付", "已发货", "已完成", "已取消"
+        ));
+        adminOrderStatusFilter.setValue("全部订单");
+        
         // 订单管理按钮事件
         orderSearchButton.setOnAction(event -> handleOrderSearch());
+        adminFilterOrderButton.setOnAction(event -> handleAdminFilterOrders());
         viewOrderDetailsButton.setOnAction(event -> handleViewOrderDetails());
         confirmOrderButton.setOnAction(event -> handleConfirmOrder());
         shipOrderButton.setOnAction(event -> handleShipOrder());
@@ -298,7 +309,7 @@ public class AdminMainController extends BaseController implements Initializable
         
         // 其他按钮事件
         changePasswordButton.setOnAction(event -> handleChangePassword());
-        logoutButton.setOnAction(event -> handleLogout());
+        logoutButton.setOnAction(event -> handleLogout(logoutButton));
         
         // 设置回车搜索
         bookSearchField.setOnAction(event -> handleBookSearch());
@@ -1175,9 +1186,50 @@ public class AdminMainController extends BaseController implements Initializable
     }
     
     /**
-     * 处理退出登录事件
+     * 处理管理员订单状态筛选
      */
-    private void handleLogout() {
-        handleLogout(logoutButton);
+    @FXML
+    private void handleAdminFilterOrders() {
+        try {
+            String selectedStatus = adminOrderStatusFilter.getValue();
+            List<Order> filteredOrders;
+            
+            if ("全部订单".equals(selectedStatus)) {
+                filteredOrders = orderService.getAllOrders();
+            } else {
+                // 将字符串转换为OrderStatus枚举
+                Order.OrderStatus status;
+                switch (selectedStatus) {
+                    case "待支付":
+                        status = Order.OrderStatus.PENDING;
+                        break;
+                    case "已支付":
+                        status = Order.OrderStatus.PAID;
+                        break;
+                    case "已确认":
+                        status = Order.OrderStatus.CONFIRMED;
+                        break;
+                    case "已发货":
+                        status = Order.OrderStatus.SHIPPED;
+                        break;
+                    case "已完成":
+                        status = Order.OrderStatus.COMPLETED;
+                        break;
+                    case "已取消":
+                        status = Order.OrderStatus.CANCELLED;
+                        break;
+                    default:
+                        status = Order.OrderStatus.PENDING;
+                        break;
+                }
+                filteredOrders = orderService.getOrdersByStatus(status);
+            }
+            
+            orderTable.setItems(FXCollections.observableArrayList(filteredOrders));
+            
+        } catch (Exception e) {
+            showErrorAlert("错误", "筛选订单失败: " + e.getMessage());
+        }
     }
+    
 }

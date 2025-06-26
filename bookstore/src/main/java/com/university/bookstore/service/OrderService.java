@@ -185,4 +185,19 @@ public interface OrderService {
      * @return 可以支付返回true，否则返回false
      */
     boolean canPayOrder(Integer orderId);
+    
+    /**
+     * 根据学生ID和订单状态获取订单列表
+     * @param studentId 学生ID
+     * @param status 订单状态
+     * @return 订单列表
+     */
+    List<Order> getOrdersByStudentIdAndStatus(Integer studentId, String status);
+    
+    /**
+     * 确认收货（学生操作）
+     * @param orderId 订单ID
+     * @return 确认收货成功返回true，否则返回false
+     */
+    boolean confirmReceipt(Integer orderId);
 }

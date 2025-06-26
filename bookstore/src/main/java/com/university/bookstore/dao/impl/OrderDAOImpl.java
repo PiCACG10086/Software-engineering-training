@@ -112,7 +112,7 @@ public class OrderDAOImpl implements OrderDAO {
 
     @Override
     public List<Order> findWithPagination(int offset, int limit) {
-        String sql = "SELECT * FROM orders ORDER BY create_time DESC LIMIT ? OFFSET ?";
+        String sql = "SELECT * FROM t_order ORDER BY create_time DESC LIMIT ? OFFSET ?";
         List<Order> orders = new ArrayList<>();
         
         try (Connection conn = DBUtil.getConnection();
@@ -133,7 +133,7 @@ public class OrderDAOImpl implements OrderDAO {
 
     @Override
     public int getTotalCount() {
-        String sql = "SELECT COUNT(*) FROM orders";
+        String sql = "SELECT COUNT(*) FROM t_order";
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             
@@ -149,19 +149,20 @@ public class OrderDAOImpl implements OrderDAO {
 
     @Override
     public boolean insert(Order order) {
-        String sql = "INSERT INTO t_order (user_id, total_amount, status, create_time) " +
-                    "VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO t_order (order_number, user_id, total_amount, status, create_time) " +
+                    "VALUES (?, ?, ?, ?, ?)";
         
         System.out.println("[DEBUG] 开始插入订单到数据库");
-        System.out.println("[DEBUG] 订单信息 - 学生ID: " + order.getStudentId() + ", 总价: " + order.getTotalPrice() + ", 状态: " + order.getStatus());
+        System.out.println("[DEBUG] 订单信息 - 订单号: " + order.getOrderNumber() + ", 学生ID: " + order.getStudentId() + ", 总价: " + order.getTotalPrice() + ", 状态: " + order.getStatus());
         
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             
-            stmt.setInt(1, order.getStudentId());
-            stmt.setBigDecimal(2, order.getTotalPrice());
-            stmt.setString(3, order.getStatus().name());
-            stmt.setTimestamp(4, new Timestamp(order.getCreateTime().getTime()));
+            stmt.setString(1, order.getOrderNumber());
+            stmt.setInt(2, order.getStudentId());
+            stmt.setBigDecimal(3, order.getTotalPrice());
+            stmt.setString(4, order.getStatus().name());
+            stmt.setTimestamp(5, new Timestamp(order.getCreateTime().getTime()));
             
             System.out.println("[DEBUG] 执行SQL: " + sql);
             int affectedRows = stmt.executeUpdate();
@@ -335,7 +336,7 @@ public class OrderDAOImpl implements OrderDAO {
     }
 
     public int getPendingOrderCount() {
-        String sql = "SELECT COUNT(*) FROM orders WHERE status = ?";
+        String sql = "SELECT COUNT(*) FROM t_order WHERE status = ?";
         
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -353,7 +354,7 @@ public class OrderDAOImpl implements OrderDAO {
     }
 
     public int getTodayOrderCount() {
-        String sql = "SELECT COUNT(*) FROM orders WHERE DATE(create_time) = CURDATE()";
+        String sql = "SELECT COUNT(*) FROM t_order WHERE DATE(create_time) = CURDATE()";
         
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -454,6 +455,33 @@ public class OrderDAOImpl implements OrderDAO {
             e.printStackTrace();
             return false;
         }
+    }
+
+    /**
+     * 根据学生ID和订单状态查找订单
+     */
+    @Override
+    public List<Order> findByStudentIdAndStatus(Integer studentId, Order.OrderStatus status) {
+        List<Order> orders = new ArrayList<>();
+        String sql = "SELECT * FROM t_order WHERE student_id = ? AND status = ? ORDER BY create_time DESC";
+        
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, studentId);
+            stmt.setString(2, status.name());
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    orders.add(mapResultSetToOrder(rs));
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("根据学生ID和状态查找订单失败: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+        return orders;
     }
 
     /**

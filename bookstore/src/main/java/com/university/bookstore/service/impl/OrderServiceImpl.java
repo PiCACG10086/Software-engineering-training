@@ -426,4 +426,68 @@ public class OrderServiceImpl implements OrderService {
         // 只有待支付状态的订单可以支付
         return order.getStatus() == Order.OrderStatus.PENDING;
     }
+    
+    @Override
+    public List<Order> getOrdersByStudentIdAndStatus(Integer studentId, String status) {
+        if (studentId == null || status == null || status.trim().isEmpty()) {
+            return new ArrayList<>();
+        }
+        
+        try {
+            // 将字符串状态转换为枚举
+            Order.OrderStatus orderStatus;
+            switch (status) {
+                case "待支付":
+                    orderStatus = Order.OrderStatus.PENDING;
+                    break;
+                case "已支付":
+                    orderStatus = Order.OrderStatus.PAID;
+                    break;
+                case "已确认":
+                    orderStatus = Order.OrderStatus.CONFIRMED;
+                    break;
+                case "已发货":
+                    orderStatus = Order.OrderStatus.SHIPPED;
+                    break;
+                case "已完成":
+                    orderStatus = Order.OrderStatus.COMPLETED;
+                    break;
+                case "已取消":
+                    orderStatus = Order.OrderStatus.CANCELLED;
+                    break;
+                default:
+                    return new ArrayList<>();
+            }
+            
+            return orderDAO.findByStudentIdAndStatus(studentId, orderStatus);
+        } catch (Exception e) {
+            System.err.println("根据学生ID和状态获取订单失败: " + e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+    
+    @Override
+    public boolean confirmReceipt(Integer orderId) {
+        if (orderId == null) {
+            return false;
+        }
+        
+        try {
+            Order order = orderDAO.findById(orderId);
+            if (order == null) {
+                return false;
+            }
+            
+            // 只有已发货状态的订单可以确认收货
+            if (order.getStatus() != Order.OrderStatus.SHIPPED) {
+                return false;
+            }
+            
+            // 更新订单状态为已完成
+            return orderDAO.updateStatus(orderId, Order.OrderStatus.COMPLETED);
+        } catch (Exception e) {
+            System.err.println("确认收货失败: " + e.getMessage());
+            return false;
+        }
+    }
 }

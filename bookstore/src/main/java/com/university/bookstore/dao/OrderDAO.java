@@ -32,6 +32,14 @@ public interface OrderDAO {
     List<Order> findByStudentId(Integer studentId);
     
     /**
+     * 根据学生ID和订单状态查找订单
+     * @param studentId 学生ID
+     * @param status 订单状态
+     * @return 订单列表
+     */
+    List<Order> findByStudentIdAndStatus(Integer studentId, Order.OrderStatus status);
+    
+    /**
      * 查找所有订单
      * @return 订单列表
      */

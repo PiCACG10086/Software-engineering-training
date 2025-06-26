@@ -92,6 +92,12 @@ public class StudentMainController extends BaseController implements Initializab
     private Button cancelOrderButton;
     @FXML
     private Button payOrderButton;
+    @FXML
+    private ComboBox<String> orderStatusFilter;
+    @FXML
+    private Button filterOrderButton;
+    @FXML
+    private Button confirmReceiptButton;
     
     // 个人信息相关控件
     @FXML
@@ -257,6 +263,12 @@ public class StudentMainController extends BaseController implements Initializab
         // 初始化数量选择器
         quantitySpinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 99, 1));
         
+        // 初始化订单状态筛选下拉框
+        orderStatusFilter.setItems(FXCollections.observableArrayList(
+            "全部订单", "待支付", "已支付", "已发货", "已完成", "已取消"
+        ));
+        orderStatusFilter.setValue("全部订单");
+        
         // 设置按钮事件
         searchButton.setOnAction(event -> handleSearch());
         addToCartButton.setOnAction(event -> handleAddToCart());
@@ -266,6 +278,8 @@ public class StudentMainController extends BaseController implements Initializab
         refreshOrderButton.setOnAction(event -> handleRefreshOrder());
         viewOrderDetailsButton.setOnAction(event -> handleViewOrderDetails());
         cancelOrderButton.setOnAction(event -> handleCancelOrder());
+        filterOrderButton.setOnAction(event -> handleFilterOrders());
+        confirmReceiptButton.setOnAction(event -> handleConfirmReceipt());
         changePasswordButton.setOnAction(event -> handleChangePassword());
         logoutButton.setOnAction(event -> handleLogout());
         
@@ -753,6 +767,64 @@ public class StudentMainController extends BaseController implements Initializab
         loadOrders();
         orderTable.refresh();
         showInfoAlert("刷新成功", "订单列表已刷新");
+    }
+    
+    /**
+     * 处理订单筛选事件
+     */
+    private void handleFilterOrders() {
+        if (currentUser == null) return;
+        
+        String selectedStatus = orderStatusFilter.getValue();
+        try {
+            List<Order> orders;
+            if ("全部订单".equals(selectedStatus)) {
+                orders = orderService.getOrdersByStudentId(currentUser.getId());
+            } else {
+                orders = orderService.getOrdersByStudentIdAndStatus(currentUser.getId(), selectedStatus);
+            }
+            orderTable.setItems(FXCollections.observableArrayList(orders));
+        } catch (Exception e) {
+            showErrorAlert("筛选失败", "筛选订单失败：" + e.getMessage());
+        }
+    }
+    
+    /**
+     * 处理确认收货事件
+     */
+    private void handleConfirmReceipt() {
+        Order selectedOrder = orderTable.getSelectionModel().getSelectedItem();
+        if (selectedOrder == null) {
+            showWarningAlert("请选择订单", "请先选择要确认收货的订单");
+            return;
+        }
+        
+        if (selectedOrder.getStatus() != Order.OrderStatus.SHIPPED) {
+            showWarningAlert("无法确认收货", "只有已发货的订单才能确认收货");
+            return;
+        }
+        
+        // 确认对话框
+        boolean confirmed = showConfirmDialog(
+            "确认收货", 
+            String.format("确认收货订单：%s\n总金额：¥%.2f\n\n确认后订单状态将变为已完成，无法撤销。", 
+                selectedOrder.getOrderNumber(), selectedOrder.getTotalPrice())
+        );
+        
+        if (confirmed) {
+            try {
+                boolean success = orderService.confirmReceipt(selectedOrder.getId());
+                if (success) {
+                    loadOrders(); // 刷新订单列表
+                    showInfoAlert("确认收货成功", 
+                        String.format("订单 %s 已确认收货，状态已更新为已完成", selectedOrder.getOrderNumber()));
+                } else {
+                    showErrorAlert("确认收货失败", "确认收货失败，请重试");
+                }
+            } catch (Exception e) {
+                showErrorAlert("确认收货失败", "确认收货失败：" + e.getMessage());
+            }
+        }
     }
     
     /**

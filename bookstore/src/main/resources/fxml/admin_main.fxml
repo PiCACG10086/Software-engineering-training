@@ -127,6 +127,9 @@
                               <Label text="订单搜索：" />
                               <TextField fx:id="orderSearchField" prefWidth="200.0" promptText="输入订单号" />
                               <Button fx:id="orderSearchButton" mnemonicParsing="false" text="搜索" />
+                              <Label text="状态筛选：" />
+                              <ComboBox fx:id="adminOrderStatusFilter" prefWidth="120.0" promptText="全部订单" />
+                              <Button fx:id="adminFilterOrderButton" text="筛选" style="-fx-background-color: #2196F3; -fx-text-fill: white;" />
                               <Region HBox.hgrow="ALWAYS" />
                               <Button fx:id="refreshOrderButton" mnemonicParsing="false" onAction="#handleRefreshOrder" style="-fx-background-color: #9C27B0; -fx-text-fill: white;" text="刷新" />
                               <Button fx:id="viewOrderDetailsButton" mnemonicParsing="false" style="-fx-background-color: #2196F3; -fx-text-fill: white;" text="查看详情" />
