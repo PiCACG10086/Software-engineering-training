@@ -18,7 +18,7 @@
                      </font>
                   </Label>
                   <Region HBox.hgrow="ALWAYS" />
-                  <Label fx:id="usernameLabel" text="用户名" textFill="WHITE" />
+                  <Label fx:id="headerUsernameLabel" text="用户名" textFill="WHITE" />
                   <Label text="|" textFill="WHITE" />
                   <Button fx:id="logoutButton" style="-fx-background-color: transparent; -fx-text-fill: white; -fx-border-color: white; -fx-border-radius: 3;" text="退出登录" />
                </children>
@@ -140,6 +140,7 @@
                            <children>
                               <Region HBox.hgrow="ALWAYS" />
                               <Button fx:id="refreshOrderButton" mnemonicParsing="false" style="-fx-background-color: #4CAF50; -fx-text-fill: white;" text="刷新" />
+                              <Button fx:id="payOrderButton" mnemonicParsing="false" onAction="#handlePayOrder" style="-fx-background-color: #FF9800; -fx-text-fill: white;" text="支付订单" />
                               <Button fx:id="viewOrderDetailsButton" mnemonicParsing="false" style="-fx-background-color: #2196F3; -fx-text-fill: white;" text="查看详情" />
                               <Button fx:id="cancelOrderButton" mnemonicParsing="false" style="-fx-background-color: #f44336; -fx-text-fill: white;" text="取消订单" />
                            </children>

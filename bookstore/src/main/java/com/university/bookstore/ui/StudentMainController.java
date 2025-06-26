@@ -15,6 +15,7 @@ import java.math.BigDecimal;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.Optional;
 
 /**
  * 学生主界面控制器
@@ -80,8 +81,12 @@ public class StudentMainController extends BaseController implements Initializab
     private Button viewOrderDetailsButton;
     @FXML
     private Button cancelOrderButton;
+    @FXML
+    private Button payOrderButton;
     
     // 个人信息相关控件
+    @FXML
+    private Label headerUsernameLabel;
     @FXML
     private Label usernameLabel;
     @FXML
@@ -126,6 +131,7 @@ public class StudentMainController extends BaseController implements Initializab
     @Override
     protected void onUserSet() {
         if (currentUser != null) {
+            headerUsernameLabel.setText(currentUser.getUsername());
             usernameLabel.setText(currentUser.getUsername());
             nameLabel.setText(currentUser.getName());
             studentIdLabel.setText(currentUser.getStudentId() != null ? currentUser.getStudentId() : "无");
@@ -452,6 +458,61 @@ public class StudentMainController extends BaseController implements Initializab
             }
         }
     }
+    
+    /**
+     * 处理支付订单事件
+     */
+    @FXML
+    private void handlePayOrder() {
+        Order selectedOrder = orderTable.getSelectionModel().getSelectedItem();
+        if (selectedOrder == null) {
+            showWarningAlert("请选择订单", "请先选择要支付的订单");
+            return;
+        }
+        
+        if (!orderService.canPayOrder(selectedOrder.getId())) {
+            showWarningAlert("无法支付", "该订单当前状态无法支付");
+            return;
+        }
+        
+        // 显示支付方式选择对话框
+        String paymentMethod = showPaymentMethodDialog();
+        if (paymentMethod == null) {
+            return; // 用户取消支付
+        }
+        
+        // 直接处理支付
+        boolean paymentResult = orderService.payOrder(selectedOrder.getId(), paymentMethod);
+        
+        if (paymentResult) {
+            loadOrders(); // 刷新订单列表
+            showInfoAlert("支付成功", 
+                String.format("订单 %s 支付成功！\n支付方式：%s\n支付金额：¥%.2f", 
+                    selectedOrder.getOrderNumber(), paymentMethod, selectedOrder.getTotalPrice()));
+        } else {
+            showErrorAlert("支付失败", 
+                String.format("订单 %s 支付失败，请重试！\n可能原因：订单状态异常等", 
+                    selectedOrder.getOrderNumber()));
+        }
+    }
+    
+    /**
+     * 显示支付方式选择对话框
+     * @return 选择的支付方式，如果取消返回null
+     */
+    private String showPaymentMethodDialog() {
+        List<String> choices = Arrays.asList("支付宝", "微信支付", "银行卡支付", "校园卡支付");
+        
+        ChoiceDialog<String> dialog = new ChoiceDialog<>("支付宝", choices);
+        dialog.setTitle("选择支付方式");
+        dialog.setHeaderText("请选择您的支付方式");
+        dialog.setContentText("支付方式：");
+        
+        Optional<String> result = dialog.showAndWait();
+        return result.orElse(null);
+    }
+    
+
     
     /**
      * 处理修改密码事件

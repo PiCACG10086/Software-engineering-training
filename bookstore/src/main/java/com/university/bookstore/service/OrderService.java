@@ -170,4 +170,19 @@ public interface OrderService {
      * @return 订单统计信息（包含各状态订单数量）
      */
     java.util.Map<Order.OrderStatus, Integer> getStudentOrderStatistics(Integer studentId);
+    
+    /**
+     * 模拟支付订单
+     * @param orderId 订单ID
+     * @param paymentMethod 支付方式（如：支付宝、微信、银行卡等）
+     * @return 支付成功返回true，否则返回false
+     */
+    boolean payOrder(Integer orderId, String paymentMethod);
+    
+    /**
+     * 检查订单是否可以支付
+     * @param orderId 订单ID
+     * @return 可以支付返回true，否则返回false
+     */
+    boolean canPayOrder(Integer orderId);
 }

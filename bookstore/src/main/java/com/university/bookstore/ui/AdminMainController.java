@@ -490,8 +490,8 @@ public class AdminMainController extends BaseController implements Initializable
             return;
         }
         
-        if (selectedOrder.getStatus() != Order.OrderStatus.PENDING) {
-            showWarningAlert("无法确认", "只能确认待处理状态的订单");
+        if (selectedOrder.getStatus() != Order.OrderStatus.PENDING && selectedOrder.getStatus() != Order.OrderStatus.PAID) {
+            showWarningAlert("无法确认", "只能确认待支付或已支付状态的订单");
             return;
         }
         

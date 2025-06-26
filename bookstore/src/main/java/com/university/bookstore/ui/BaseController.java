@@ -208,7 +208,9 @@ public abstract class BaseController {
     protected String formatOrderStatus(com.university.bookstore.model.Order.OrderStatus status) {
         switch (status) {
             case PENDING:
-                return "待处理";
+                return "待支付";
+            case PAID:
+                return "已支付";
             case CONFIRMED:
                 return "已确认";
             case SHIPPED:

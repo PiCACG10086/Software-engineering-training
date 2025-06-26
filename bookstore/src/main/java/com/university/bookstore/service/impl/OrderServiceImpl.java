@@ -10,7 +10,9 @@ import com.university.bookstore.service.BookService;
 
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 /**
  * 订单业务逻辑服务实现类
@@ -175,7 +177,7 @@ public class OrderServiceImpl implements OrderService {
         }
         
         Order order = orderDAO.findById(orderId);
-        if (order == null || order.getStatus() != Order.OrderStatus.PENDING) {
+        if (order == null || (order.getStatus() != Order.OrderStatus.PENDING && order.getStatus() != Order.OrderStatus.PAID)) {
             return false;
         }
         
@@ -362,5 +364,35 @@ public class OrderServiceImpl implements OrderService {
         }
         
         return statistics;
+    }
+    
+    @Override
+    public boolean payOrder(Integer orderId, String paymentMethod) {
+        if (orderId == null || paymentMethod == null || paymentMethod.trim().isEmpty()) {
+            return false;
+        }
+        
+        // 检查订单是否可以支付
+        if (!canPayOrder(orderId)) {
+            return false;
+        }
+        
+        // 直接处理支付，更新订单状态为已支付
+        return orderDAO.updateStatus(orderId, Order.OrderStatus.PAID);
+    }
+    
+    @Override
+    public boolean canPayOrder(Integer orderId) {
+        if (orderId == null) {
+            return false;
+        }
+        
+        Order order = orderDAO.findById(orderId);
+        if (order == null) {
+            return false;
+        }
+        
+        // 只有待支付状态的订单可以支付
+        return order.getStatus() == Order.OrderStatus.PENDING;
     }
 }
