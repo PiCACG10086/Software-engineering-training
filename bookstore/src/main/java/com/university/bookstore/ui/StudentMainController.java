@@ -278,7 +278,15 @@ public class StudentMainController extends BaseController implements Initializab
         refreshOrderButton.setOnAction(event -> handleRefreshOrder());
         viewOrderDetailsButton.setOnAction(event -> handleViewOrderDetails());
         cancelOrderButton.setOnAction(event -> handleCancelOrder());
-        filterOrderButton.setOnAction(event -> handleFilterOrders());
+        // 移除筛选按钮事件，改为下拉列表值变化监听
+        // filterOrderButton.setOnAction(event -> handleFilterOrders());
+        
+        // 添加下拉列表值变化监听器，实现自动筛选
+        orderStatusFilter.valueProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue != null) {
+                refreshOrdersWithCurrentFilter();
+            }
+        });
         confirmReceiptButton.setOnAction(event -> handleConfirmReceipt());
         changePasswordButton.setOnAction(event -> handleChangePassword());
         logoutButton.setOnAction(event -> handleLogout());
@@ -308,8 +316,25 @@ public class StudentMainController extends BaseController implements Initializab
     private void loadOrders() {
         if (currentUser == null) return;
         
+        // 重置筛选条件为全部订单
+        orderStatusFilter.setValue("全部订单");
+        refreshOrdersWithCurrentFilter();
+    }
+    
+    /**
+     * 根据当前筛选条件刷新订单数据
+     */
+    private void refreshOrdersWithCurrentFilter() {
+        if (currentUser == null) return;
+        
+        String selectedStatus = orderStatusFilter.getValue();
         try {
-            List<Order> orders = orderService.getOrdersByStudentId(currentUser.getId());
+            List<Order> orders;
+            if ("全部订单".equals(selectedStatus)) {
+                orders = orderService.getOrdersByStudentId(currentUser.getId());
+            } else {
+                orders = orderService.getOrdersByStudentIdAndStatus(currentUser.getId(), selectedStatus);
+            }
             orderTable.setItems(FXCollections.observableArrayList(orders));
         } catch (Exception e) {
             showErrorAlert("加载失败", "加载订单数据失败：" + e.getMessage());
@@ -648,9 +673,9 @@ public class StudentMainController extends BaseController implements Initializab
                     try {
                         // 刷新图书列表
                         loadBooks();
-                        // 刷新订单列表（如果当前用户已设置）
+                        // 刷新订单列表（如果当前用户已设置），保持当前筛选状态
                         if (currentUser != null) {
-                            loadOrders();
+                            refreshOrdersWithCurrentFilter();
                         }
                     } catch (Exception e) {
                         // 静默处理异常，避免干扰用户操作
@@ -773,20 +798,7 @@ public class StudentMainController extends BaseController implements Initializab
      * 处理订单筛选事件
      */
     private void handleFilterOrders() {
-        if (currentUser == null) return;
-        
-        String selectedStatus = orderStatusFilter.getValue();
-        try {
-            List<Order> orders;
-            if ("全部订单".equals(selectedStatus)) {
-                orders = orderService.getOrdersByStudentId(currentUser.getId());
-            } else {
-                orders = orderService.getOrdersByStudentIdAndStatus(currentUser.getId(), selectedStatus);
-            }
-            orderTable.setItems(FXCollections.observableArrayList(orders));
-        } catch (Exception e) {
-            showErrorAlert("筛选失败", "筛选订单失败：" + e.getMessage());
-        }
+        refreshOrdersWithCurrentFilter();
     }
     
     /**

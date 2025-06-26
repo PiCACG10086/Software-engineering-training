@@ -294,7 +294,15 @@ public class AdminMainController extends BaseController implements Initializable
         
         // 订单管理按钮事件
         orderSearchButton.setOnAction(event -> handleOrderSearch());
-        adminFilterOrderButton.setOnAction(event -> handleAdminFilterOrders());
+        // 移除筛选按钮事件，改为下拉列表值变化监听
+        // adminFilterOrderButton.setOnAction(event -> handleAdminFilterOrders());
+        
+        // 添加下拉列表值变化监听器，实现自动筛选
+        adminOrderStatusFilter.valueProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue != null) {
+                refreshOrdersWithCurrentFilter();
+            }
+        });
         viewOrderDetailsButton.setOnAction(event -> handleViewOrderDetails());
         confirmOrderButton.setOnAction(event -> handleConfirmOrder());
         shipOrderButton.setOnAction(event -> handleShipOrder());
@@ -345,12 +353,9 @@ public class AdminMainController extends BaseController implements Initializable
      * 加载订单数据
      */
     private void loadOrders() {
-        try {
-            List<Order> orders = orderService.getAllOrders();
-            orderTable.setItems(FXCollections.observableArrayList(orders));
-        } catch (Exception e) {
-            showErrorAlert("加载失败", "加载订单数据失败：" + e.getMessage());
-        }
+        // 重置筛选条件为"全部订单"
+        adminOrderStatusFilter.setValue("全部订单");
+        refreshOrdersWithCurrentFilter();
     }
     
     /**
@@ -1156,8 +1161,11 @@ public class AdminMainController extends BaseController implements Initializable
                 // 在JavaFX应用线程中执行刷新操作
                 Platform.runLater(() -> {
                     try {
-                        // 刷新所有数据
-                        loadAllData();
+                        // 刷新图书和用户数据
+                        loadBooks();
+                        loadUsers();
+                        // 对于订单数据，保持当前筛选状态
+                        refreshOrdersWithCurrentFilter();
                     } catch (Exception e) {
                         // 静默处理异常，避免干扰用户操作
                         System.err.println("自动刷新失败: " + e.getMessage());
@@ -1190,8 +1198,19 @@ public class AdminMainController extends BaseController implements Initializable
      */
     @FXML
     private void handleAdminFilterOrders() {
+        refreshOrdersWithCurrentFilter();
+    }
+    
+    /**
+     * 根据当前筛选条件刷新订单数据
+     */
+    private void refreshOrdersWithCurrentFilter() {
         try {
             String selectedStatus = adminOrderStatusFilter.getValue();
+            if (selectedStatus == null) {
+                selectedStatus = "全部订单";
+            }
+            
             List<Order> filteredOrders;
             
             if ("全部订单".equals(selectedStatus)) {

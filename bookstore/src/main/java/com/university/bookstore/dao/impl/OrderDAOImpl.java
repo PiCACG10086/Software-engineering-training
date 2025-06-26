@@ -463,7 +463,7 @@ public class OrderDAOImpl implements OrderDAO {
     @Override
     public List<Order> findByStudentIdAndStatus(Integer studentId, Order.OrderStatus status) {
         List<Order> orders = new ArrayList<>();
-        String sql = "SELECT * FROM t_order WHERE student_id = ? AND status = ? ORDER BY create_time DESC";
+        String sql = "SELECT * FROM t_order WHERE user_id = ? AND status = ? ORDER BY create_time DESC";
         
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
