@@ -1,0 +1,276 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+
+<BorderPane xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.university.bookstore.ui.TeacherMainController">
+   <top>
+      <VBox>
+         <HBox alignment="CENTER_LEFT" spacing="10.0" style="-fx-background-color: #FF9800; -fx-padding: 10;">
+            <Label text="高校教材购销系统 - 教师" textFill="WHITE">
+               <font>
+                  <Font name="System Bold" size="18.0" />
+               </font>
+            </Label>
+            <Region HBox.hgrow="ALWAYS" />
+            <Label text="欢迎，" textFill="WHITE" />
+            <Label fx:id="teacherUsernameLabel" text="teacher" textFill="WHITE">
+               <font>
+                  <Font name="System Bold" size="14.0" />
+               </font>
+            </Label>
+            <Button fx:id="logoutButton" mnemonicParsing="false" text="退出登录" />
+         </HBox>
+      </VBox>
+   </top>
+   <center>
+      <TabPane tabClosingPolicy="UNAVAILABLE">
+         <tabs>
+            <!-- 图书浏览 -->
+            <Tab text="图书浏览">
+               <content>
+                  <BorderPane>
+                     <top>
+                        <VBox spacing="10.0">
+                           <HBox alignment="CENTER_LEFT" spacing="10.0">
+                              <Label text="图书搜索：" />
+                              <TextField fx:id="bookSearchField" prefWidth="200.0" promptText="输入书名、作者或ISBN" />
+                              <Button fx:id="bookSearchButton" mnemonicParsing="false" text="搜索" />
+                              <Region HBox.hgrow="ALWAYS" />
+                              <Button fx:id="viewBookDetailsButton" mnemonicParsing="false" style="-fx-background-color: #2196F3; -fx-text-fill: white;" text="查看详情" />
+                           </HBox>
+                           <padding>
+                              <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                           </padding>
+                        </VBox>
+                     </top>
+                     <center>
+                        <VBox spacing="10.0">
+                           <Label text="图书列表">
+                              <font>
+                                 <Font name="System Bold" size="14.0" />
+                              </font>
+                           </Label>
+                           <TableView fx:id="bookTable" VBox.vgrow="ALWAYS">
+                              <columns>
+                                 <TableColumn fx:id="bookTitleColumn" prefWidth="200.0" text="书名" />
+                                 <TableColumn fx:id="bookAuthorColumn" prefWidth="120.0" text="作者" />
+                                 <TableColumn fx:id="bookPublisherColumn" prefWidth="120.0" text="出版社" />
+                                 <TableColumn fx:id="bookPriceColumn" prefWidth="80.0" text="价格" />
+                                 <TableColumn fx:id="bookStockColumn" prefWidth="60.0" text="库存" />
+                              </columns>
+                           </TableView>
+                           <padding>
+                              <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                           </padding>
+                        </VBox>
+                     </center>
+                  </BorderPane>
+               </content>
+            </Tab>
+            
+
+            
+            <!-- 学生管理 -->
+            <Tab text="学生管理">
+               <content>
+                  <BorderPane>
+                     <top>
+                        <VBox spacing="10.0">
+                           <HBox alignment="CENTER_LEFT" spacing="10.0">
+                              <Label text="学生搜索：" />
+                              <TextField fx:id="studentSearchField" prefWidth="200.0" promptText="输入学生姓名或学号" />
+                              <Button fx:id="studentSearchButton" mnemonicParsing="false" text="搜索" />
+                              <Region HBox.hgrow="ALWAYS" />
+                              <Button fx:id="viewStudentOrdersButton" mnemonicParsing="false" style="-fx-background-color: #2196F3; -fx-text-fill: white;" text="查看订单" />
+                           </HBox>
+                           <padding>
+                              <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                           </padding>
+                        </VBox>
+                     </top>
+                     <center>
+                        <VBox spacing="10.0">
+                           <Label text="学生列表">
+                              <font>
+                                 <Font name="System Bold" size="14.0" />
+                              </font>
+                           </Label>
+                           <TableView fx:id="studentTable" VBox.vgrow="ALWAYS">
+                              <columns>
+                                 <TableColumn fx:id="studentNameColumn" prefWidth="120.0" text="姓名" />
+                                 <TableColumn fx:id="studentIdColumn" prefWidth="120.0" text="学号" />
+                                 <TableColumn fx:id="studentUsernameColumn" prefWidth="120.0" text="用户名" />
+                                 <TableColumn fx:id="studentCreateTimeColumn" prefWidth="120.0" text="注册时间" />
+                              </columns>
+                           </TableView>
+                           <padding>
+                              <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                           </padding>
+                        </VBox>
+                     </center>
+                  </BorderPane>
+               </content>
+            </Tab>
+            
+            <!-- 订单查看 -->
+            <Tab text="订单查看">
+               <content>
+                  <BorderPane>
+                     <top>
+                        <VBox spacing="10.0">
+                           <HBox alignment="CENTER_LEFT" spacing="10.0">
+                              <Label text="订单搜索：" />
+                              <TextField fx:id="orderSearchField" prefWidth="200.0" promptText="输入订单号" />
+                              <Button fx:id="orderSearchButton" mnemonicParsing="false" text="搜索" />
+                              <Region HBox.hgrow="ALWAYS" />
+                              <Button fx:id="refreshOrderButton" mnemonicParsing="false" style="-fx-background-color: #4CAF50; -fx-text-fill: white;" text="刷新" />
+                              <Button fx:id="viewOrderDetailsButton" mnemonicParsing="false" style="-fx-background-color: #2196F3; -fx-text-fill: white;" text="查看详情" />
+                           </HBox>
+                           <padding>
+                              <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                           </padding>
+                        </VBox>
+                     </top>
+                     <center>
+                        <VBox spacing="10.0">
+                           <Label text="订单列表">
+                              <font>
+                                 <Font name="System Bold" size="14.0" />
+                              </font>
+                           </Label>
+                           <TableView fx:id="orderTable" VBox.vgrow="ALWAYS">
+                              <columns>
+                                 <TableColumn fx:id="orderNumberColumn" prefWidth="120.0" text="订单号" />
+                                 <TableColumn fx:id="orderStudentColumn" prefWidth="100.0" text="学生" />
+                                 <TableColumn fx:id="orderTotalColumn" prefWidth="100.0" text="总价" />
+                                 <TableColumn fx:id="orderStatusColumn" prefWidth="100.0" text="状态" />
+                                 <TableColumn fx:id="orderDateColumn" prefWidth="150.0" text="下单时间" />
+                              </columns>
+                           </TableView>
+                           <padding>
+                              <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                           </padding>
+                        </VBox>
+                     </center>
+                  </BorderPane>
+               </content>
+            </Tab>
+            
+
+            
+            <!-- 个人信息 -->
+            <Tab text="个人信息">
+               <content>
+                  <ScrollPane fitToWidth="true" style="-fx-background-color: #f5f5f5;">
+                     <content>
+                        <VBox alignment="TOP_CENTER" spacing="30.0" style="-fx-background-color: #f5f5f5;">
+                           <!-- 头部标题区域 -->
+                           <VBox alignment="CENTER" spacing="10.0" style="-fx-background-color: #FF9800; -fx-background-radius: 15;">
+                              <Label text="👨‍🏫" style="-fx-font-size: 48px; -fx-text-fill: white;" />
+                              <Label text="个人信息" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: white;" />
+                              <Label text="教师账户信息" style="-fx-font-size: 14px; -fx-text-fill: #FFF3E0;" />
+                              <padding>
+                                 <Insets bottom="30.0" left="20.0" right="20.0" top="30.0" />
+                              </padding>
+                           </VBox>
+                           
+                           <!-- 信息卡片区域 -->
+                           <VBox spacing="20.0" maxWidth="500.0">
+                              <!-- 基本信息卡片 -->
+                              <VBox spacing="15.0" style="-fx-background-color: white; -fx-background-radius: 15; -fx-padding: 25; -fx-border-color: #e0e0e0; -fx-border-radius: 15;">
+                                 <HBox alignment="CENTER_LEFT" spacing="10.0">
+                                    <Label text="📋" style="-fx-font-size: 20px;" />
+                                    <Label text="基本信息" style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #333;" />
+                                 </HBox>
+                                 <Separator style="-fx-background-color: #e0e0e0;" />
+                                 
+                                 <GridPane hgap="15.0" vgap="20.0">
+                                    <columnConstraints>
+                                       <ColumnConstraints hgrow="NEVER" minWidth="80.0" prefWidth="80.0" />
+                                       <ColumnConstraints hgrow="ALWAYS" minWidth="200.0" />
+                                    </columnConstraints>
+                                    <rowConstraints>
+                                       <RowConstraints minHeight="35.0" prefHeight="35.0" vgrow="SOMETIMES" />
+                                       <RowConstraints minHeight="35.0" prefHeight="35.0" vgrow="SOMETIMES" />
+                                       <RowConstraints minHeight="35.0" prefHeight="35.0" vgrow="SOMETIMES" />
+                                    </rowConstraints>
+                                    
+                                    <HBox alignment="CENTER_LEFT" spacing="8.0" GridPane.rowIndex="0">
+                                       <Label text="👤" style="-fx-font-size: 16px;" />
+                                       <Label text="用户名" style="-fx-font-size: 14px; -fx-text-fill: #666; -fx-font-weight: bold;" />
+                                    </HBox>
+                                    <Label fx:id="teacherUsernameLabel" text="teacher" style="-fx-font-size: 14px; -fx-text-fill: #333; -fx-background-color: #f8f9fa; -fx-background-radius: 8; -fx-padding: 8 12;" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+                                    
+                                    <HBox alignment="CENTER_LEFT" spacing="8.0" GridPane.rowIndex="1">
+                                       <Label text="👨‍🏫" style="-fx-font-size: 16px;" />
+                                       <Label text="姓名" style="-fx-font-size: 14px; -fx-text-fill: #666; -fx-font-weight: bold;" />
+                                    </HBox>
+                                    <Label fx:id="teacherNameLabel" text="教师" style="-fx-font-size: 14px; -fx-text-fill: #333; -fx-background-color: #f8f9fa; -fx-background-radius: 8; -fx-padding: 8 12;" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                                    
+                                    <HBox alignment="CENTER_LEFT" spacing="8.0" GridPane.rowIndex="2">
+                                       <Label text="🎓" style="-fx-font-size: 16px;" />
+                                       <Label text="角色" style="-fx-font-size: 14px; -fx-text-fill: #666; -fx-font-weight: bold;" />
+                                    </HBox>
+                                    <Label text="任课教师" style="-fx-font-size: 14px; -fx-text-fill: #333; -fx-background-color: #fff3e0; -fx-background-radius: 8; -fx-padding: 8 12;" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                                 </GridPane>
+                              </VBox>
+                              
+                              <!-- 操作区域卡片 -->
+                              <VBox spacing="15.0" style="-fx-background-color: white; -fx-background-radius: 15; -fx-padding: 25; -fx-border-color: #e0e0e0; -fx-border-radius: 15;">
+                                 <HBox alignment="CENTER_LEFT" spacing="10.0">
+                                    <Label text="⚙️" style="-fx-font-size: 20px;" />
+                                    <Label text="账户操作" style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #333;" />
+                                 </HBox>
+                                 <Separator style="-fx-background-color: #e0e0e0;" />
+                                 
+                                 <HBox alignment="CENTER" spacing="15.0">
+                                    <Button fx:id="changePasswordButton" mnemonicParsing="false" 
+                                            style="-fx-background-color: #FF9800; -fx-text-fill: white; -fx-background-radius: 20; -fx-font-size: 14px; -fx-font-weight: bold;" 
+                                            text="🔒 修改密码" 
+                                            prefWidth="150.0" prefHeight="40.0" />
+                                 </HBox>
+                              </VBox>
+                              
+                              <!-- 教学信息卡片 -->
+                              <VBox spacing="15.0" style="-fx-background-color: white; -fx-background-radius: 15; -fx-padding: 25; -fx-border-color: #e0e0e0; -fx-border-radius: 15;">
+                                 <HBox alignment="CENTER_LEFT" spacing="10.0">
+                                    <Label text="📚" style="-fx-font-size: 20px;" />
+                                    <Label text="教学信息" style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #333;" />
+                                 </HBox>
+                                 <Separator style="-fx-background-color: #e0e0e0;" />
+                                 
+                                 <VBox spacing="10.0">
+                                    <HBox alignment="CENTER_LEFT" spacing="10.0">
+                                       <Label text="📅" style="-fx-font-size: 14px;" />
+                                       <Label text="入职时间:" style="-fx-font-size: 12px; -fx-text-fill: #666;" />
+                                       <Label text="2024-01-15 09:30:25" style="-fx-font-size: 12px; -fx-text-fill: #333;" />
+                                    </HBox>
+                                    <HBox alignment="CENTER_LEFT" spacing="10.0">
+                                       <Label text="🎯" style="-fx-font-size: 14px;" />
+                                       <Label text="职位类型:" style="-fx-font-size: 12px; -fx-text-fill: #666;" />
+                                       <Label text="任课教师" style="-fx-font-size: 12px; -fx-text-fill: #FF9800;" />
+                                    </HBox>
+                                    <HBox alignment="CENTER_LEFT" spacing="10.0">
+                                       <Label text="📖" style="-fx-font-size: 14px;" />
+                                       <Label text="系统状态:" style="-fx-font-size: 12px; -fx-text-fill: #666;" />
+                                       <Label text="✅ 正常使用" style="-fx-font-size: 12px; -fx-text-fill: #4CAF50;" />
+                                    </HBox>
+                                 </VBox>
+                              </VBox>
+                           </VBox>
+                           
+                           <padding>
+                              <Insets bottom="30.0" left="30.0" right="30.0" top="0.0" />
+                           </padding>
+                        </VBox>
+                     </content>
+                  </ScrollPane>
+               </content>
+            </Tab>
+         </tabs>
+      </TabPane>
+   </center>
+</BorderPane>

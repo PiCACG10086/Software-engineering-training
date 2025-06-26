@@ -117,7 +117,7 @@ public class StudentMainController extends BaseController implements Initializab
     
     // 自动刷新定时器
     private Timer autoRefreshTimer;
-    private static final int AUTO_REFRESH_INTERVAL = 30000; // 30秒自动刷新
+    private static final int AUTO_REFRESH_INTERVAL = 5000; // 5秒自动刷新
     
     @Override
     public void initialize(URL location, ResourceBundle resources) {
