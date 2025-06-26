@@ -303,7 +303,7 @@ public class OrderDAOImpl implements OrderDAO {
 
     @Override
     public boolean deleteOrderDetails(Integer orderId) {
-        String sql = "DELETE FROM order_details WHERE order_id = ?";
+        String sql = "DELETE FROM t_order_item WHERE order_id = ?";
         
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
