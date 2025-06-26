@@ -11,8 +11,12 @@ import com.university.bookstore.service.BookService;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Random;
 
 /**
  * 订单业务逻辑服务实现类
@@ -29,59 +33,86 @@ public class OrderServiceImpl implements OrderService {
     
     @Override
     public Order createOrder(Integer studentId, List<CartItem> cartItems) {
+        System.out.println("[DEBUG] 开始创建订单，学生ID: " + studentId + ", 购物车商品数量: " + (cartItems != null ? cartItems.size() : 0));
+        
         if (studentId == null || cartItems == null || cartItems.isEmpty()) {
-            return null;
+            System.out.println("[ERROR] 创建订单失败：参数无效 - studentId: " + studentId + ", cartItems: " + cartItems);
+            throw new RuntimeException("创建订单失败：学生ID或购物车信息无效");
         }
         
-        // 验证库存
-        if (!validateCartStock(cartItems)) {
-            return null;
-        }
-        
-        // 计算总价
-        BigDecimal totalPrice = calculateCartTotal(cartItems);
-        
-        // 创建订单
-        Order order = new Order();
-        order.setOrderNumber(generateOrderNumber());
-        order.setStudentId(studentId);
-        order.setTotalPrice(totalPrice);
-        order.setStatus(Order.OrderStatus.PENDING);
-        order.setCreateTime(new java.sql.Timestamp(System.currentTimeMillis()));
-        
-        // 插入订单
-        if (!orderDAO.insert(order)) {
-            return null;
-        }
-        
-        // 创建订单详情
-        List<OrderDetail> orderDetails = new ArrayList<>();
-        for (CartItem item : cartItems) {
-            OrderDetail detail = new OrderDetail();
-            detail.setOrderId(order.getId());
-            detail.setBookId(item.getBook().getId());
-            detail.setQuantity(item.getQuantity());
-            detail.setUnitPrice(item.getBook().getPrice());
-            orderDetails.add(detail);
-        }
-        
-        // 批量插入订单详情
-        if (!orderDAO.insertOrderDetails(orderDetails)) {
-            // 如果插入订单详情失败，删除已创建的订单
-            orderDAO.delete(order.getId());
-            return null;
-        }
-        
-        // 减少库存
-        for (CartItem item : cartItems) {
-            if (!bookService.reduceBookStock(item.getBook().getId(), item.getQuantity())) {
-                // 如果减少库存失败，需要回滚
-                // 这里简化处理，实际应该使用事务
-                return null;
+        try {
+            // 验证库存
+            System.out.println("[DEBUG] 开始验证库存");
+            if (!validateCartStock(cartItems)) {
+                System.out.println("[ERROR] 库存验证失败");
+                throw new RuntimeException("创建订单失败：商品库存不足");
             }
+            
+            // 计算总价
+            BigDecimal totalPrice = calculateCartTotal(cartItems);
+            System.out.println("[DEBUG] 订单总价: " + totalPrice);
+            
+            // 创建订单
+            Order order = new Order();
+            order.setOrderNumber(generateOrderNumber());
+            order.setStudentId(studentId);
+            order.setTotalPrice(totalPrice);
+            order.setStatus(Order.OrderStatus.PENDING);
+            order.setCreateTime(new java.sql.Timestamp(System.currentTimeMillis()));
+            
+            System.out.println("[DEBUG] 准备插入订单，订单号: " + order.getOrderNumber());
+            
+            // 插入订单
+            if (!orderDAO.insert(order)) {
+                System.out.println("[ERROR] 插入订单到数据库失败");
+                throw new RuntimeException("创建订单失败：无法保存订单到数据库");
+            }
+            
+            System.out.println("[DEBUG] 订单插入成功，订单ID: " + order.getId());
+            
+            // 创建订单详情
+            List<OrderDetail> orderDetails = new ArrayList<>();
+            for (CartItem item : cartItems) {
+                OrderDetail detail = new OrderDetail();
+                detail.setOrderId(order.getId());
+                detail.setBookId(item.getBook().getId());
+                detail.setQuantity(item.getQuantity());
+                detail.setPrice(item.getBook().getPrice());
+                orderDetails.add(detail);
+                System.out.println("[DEBUG] 添加订单详情 - 图书ID: " + item.getBook().getId() + ", 数量: " + item.getQuantity() + ", 单价: " + item.getBook().getPrice());
+            }
+            
+            System.out.println("[DEBUG] 准备插入订单详情，详情数量: " + orderDetails.size());
+            
+            // 批量插入订单详情
+            if (!orderDAO.insertOrderDetails(orderDetails)) {
+                System.out.println("[ERROR] 插入订单详情失败，开始回滚订单");
+                // 如果插入订单详情失败，删除已创建的订单
+                orderDAO.delete(order.getId());
+                throw new RuntimeException("创建订单失败：无法保存订单详情到数据库");
+            }
+            
+            System.out.println("[DEBUG] 订单详情插入成功，开始减少库存");
+            
+            // 减少库存
+            for (CartItem item : cartItems) {
+                System.out.println("[DEBUG] 减少库存 - 图书ID: " + item.getBook().getId() + ", 减少数量: " + item.getQuantity());
+                if (!bookService.reduceBookStock(item.getBook().getId(), item.getQuantity())) {
+                    System.out.println("[ERROR] 减少库存失败 - 图书ID: " + item.getBook().getId());
+                    // 如果减少库存失败，需要回滚
+                    // 这里简化处理，实际应该使用事务
+                    throw new RuntimeException("创建订单失败：无法减少商品库存");
+                }
+            }
+            
+            System.out.println("[DEBUG] 订单创建成功，订单ID: " + order.getId());
+            return order;
+            
+        } catch (Exception e) {
+            System.out.println("[ERROR] 创建订单过程中发生异常: " + e.getMessage());
+            e.printStackTrace();
+            throw e;
         }
-        
-        return order;
     }
     
     @Override

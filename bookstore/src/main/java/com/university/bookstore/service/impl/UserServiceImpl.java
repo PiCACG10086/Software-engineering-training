@@ -156,6 +156,15 @@ public class UserServiceImpl implements UserService {
     }
     
     @Override
+    public boolean updatePassword(Integer userId, String newPassword) {
+        if (userId == null || newPassword == null) {
+            return false;
+        }
+        
+        return userDAO.updatePassword(userId, newPassword);
+    }
+    
+    @Override
     public boolean isUsernameAvailable(String username) {
         if (username == null) {
             return false;

@@ -14,7 +14,7 @@ public class DBUtil {
     private static HikariDataSource dataSource;
     
     // 数据库连接配置
-    private static final String DB_URL = "jdbc:mysql://localhost:3306/university_bookstore?useUnicode=true&characterEncoding=utf8&useSSL=false";
+    private static final String DB_URL = "jdbc:mysql://localhost:3306/bookstore?useUnicode=true&characterEncoding=utf8&useSSL=false";
     private static final String DB_USERNAME = "root";
     private static final String DB_PASSWORD = "123456";
     private static final String DB_DRIVER = "com.mysql.jdbc.Driver";

@@ -222,7 +222,8 @@
                                     <Button fx:id="changePasswordButton" mnemonicParsing="false" 
                                             style="-fx-background-color: #2196F3; -fx-text-fill: white; -fx-background-radius: 20; -fx-font-size: 14px; -fx-font-weight: bold;" 
                                             text="🔒 修改密码" 
-                                            prefWidth="150.0" prefHeight="40.0" />
+                                            prefWidth="150.0" prefHeight="40.0" 
+                                            onAction="#handleChangePassword" />
                                  </HBox>
                               </VBox>
                               

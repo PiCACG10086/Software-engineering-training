@@ -1,0 +1,235 @@
+高校教材购销程序框架说明
+========================================
+
+项目名称：高校教材购销管理系统
+开发语言：Java
+界面框架：JavaFX
+数据库：MySQL
+构建工具：Maven
+
+一、项目概述
+----------------------------------------
+本系统是一个基于JavaFX的高校教材购销管理系统，主要用于管理高校教材的采购、销售、库存等业务。
+系统支持多角色用户（管理员、教师、学生），提供完整的教材管理功能。
+
+二、技术架构
+----------------------------------------
+1. 表现层（Presentation Layer）
+   - JavaFX界面框架
+   - FXML布局文件
+   - CSS样式文件
+
+2. 业务逻辑层（Business Logic Layer）
+   - Service层：业务逻辑处理
+   - Controller层：界面控制器
+
+3. 数据访问层（Data Access Layer）
+   - DAO模式实现
+   - 数据库连接池（HikariCP）
+
+4. 数据库层（Database Layer）
+   - MySQL数据库
+   - 数据库名称：bookstore
+
+三、数据库配置
+----------------------------------------
+数据库服务器：localhost:3306
+数据库名称：bookstore
+用户名：root
+密码：123456
+字符集：utf8
+排序规则：utf8_general_ci
+
+四、项目结构
+----------------------------------------
+bookstore/
+├── src/main/java/
+│   └── com/university/bookstore/
+│       ├── controller/          # 控制器层
+│       │   ├── LoginController.java
+│       │   ├── MainController.java
+│       │   ├── BookController.java
+│       │   ├── OrderController.java
+│       │   └── CartController.java
+│       ├── dao/                 # 数据访问层
+│       │   ├── UserDAO.java
+│       │   ├── BookDAO.java
+│       │   ├── OrderDAO.java
+│       │   ├── CartDAO.java
+│       │   └── impl/
+│       │       ├── UserDAOImpl.java
+│       │       ├── BookDAOImpl.java
+│       │       ├── OrderDAOImpl.java
+│       │       └── CartDAOImpl.java
+│       ├── model/               # 数据模型层
+│       │   ├── User.java
+│       │   ├── Book.java
+│       │   ├── Order.java
+│       │   ├── OrderItem.java
+│       │   └── Cart.java
+│       ├── service/             # 业务逻辑层
+│       │   ├── UserService.java
+│       │   ├── BookService.java
+│       │   ├── OrderService.java
+│       │   └── CartService.java
+│       ├── util/                # 工具类
+│       │   ├── DBUtil.java
+│       │   └── PasswordUtil.java
+│       └── Main.java            # 主程序入口
+├── src/main/resources/
+│   ├── fxml/                    # FXML界面文件
+│   │   ├── login.fxml
+│   │   ├── main.fxml
+│   │   ├── book_management.fxml
+│   │   ├── order_management.fxml
+│   │   └── cart.fxml
+│   └── css/                     # 样式文件
+│       └── style.css
+├── database/                    # 数据库脚本
+│   ├── init.sql                # 数据库初始化脚本
+│   └── update_order_status.sql # 订单状态更新脚本
+├── pom.xml                      # Maven配置文件
+├── README.md                    # 项目说明文档
+├── DATABASE_SETUP.md            # 数据库设置说明
+├── DATABASE_SETUP_GUIDE.md      # 数据库设置指南
+└── run.bat                      # 运行脚本
+
+五、数据库表结构
+----------------------------------------
+1. t_user（用户表）
+   - user_id：用户ID（主键）
+   - username：用户名
+   - password：密码
+   - real_name：真实姓名
+   - role：角色（admin/teacher/student）
+   - department_id：院系ID
+   - student_id：学号（学生专用）
+   - created_at：创建时间
+
+2. t_department（院系表）
+   - department_id：院系ID（主键）
+   - department_name：院系名称
+   - description：描述
+
+3. t_course（课程表）
+   - course_id：课程ID（主键）
+   - course_name：课程名称
+   - course_code：课程代码
+   - department_id：院系ID
+   - teacher_id：教师ID
+   - credits：学分
+   - description：课程描述
+
+4. t_book（图书表）
+   - book_id：图书ID（主键）
+   - title：书名
+   - author：作者
+   - publisher：出版社
+   - isbn：ISBN号
+   - price：价格
+   - stock：库存
+   - category：分类
+   - description：描述
+
+5. t_course_book（课程教材关联表）
+   - course_id：课程ID
+   - book_id：图书ID
+   - is_required：是否必修教材
+
+6. t_order（订单表）
+   - order_id：订单ID（主键）
+   - user_id：用户ID
+   - total_amount：总金额
+   - status：订单状态
+   - created_at：创建时间
+   - updated_at：更新时间
+
+7. t_order_item（订单项表）
+   - item_id：订单项ID（主键）
+   - order_id：订单ID
+   - book_id：图书ID
+   - quantity：数量
+   - price：单价
+
+8. t_cart（购物车表）
+   - cart_id：购物车ID（主键）
+   - user_id：用户ID
+   - book_id：图书ID
+   - quantity：数量
+   - created_at：创建时间
+
+六、默认用户账户
+----------------------------------------
+管理员账户：
+- 用户名：admin
+- 密码：admin123
+- 姓名：系统管理员
+
+教师账户：
+- 用户名：teacher001~teacher006
+- 密码：teacher123
+- 姓名：张教授、李老师、王副教授、刘老师、陈教授、赵老师
+
+学生账户：
+- 用户名：student001~student006
+- 密码：student123
+- 姓名：张小明、李小红、王小强、刘小芳、陈小华、赵小军
+- 学号：2021001~2021006
+
+七、主要功能模块
+----------------------------------------
+1. 用户管理模块
+   - 用户登录/注销
+   - 用户信息管理
+   - 角色权限控制
+
+2. 教材管理模块
+   - 教材信息录入
+   - 教材信息查询
+   - 教材库存管理
+   - 教材分类管理
+
+3. 课程管理模块
+   - 课程信息管理
+   - 课程教材关联
+   - 院系课程管理
+
+4. 订单管理模块
+   - 订单创建
+   - 订单查询
+   - 订单状态管理
+   - 订单统计
+
+5. 购物车模块
+   - 添加教材到购物车
+   - 购物车管理
+   - 批量结算
+
+八、运行环境要求
+----------------------------------------
+- JDK 8或以上版本
+- MySQL 5.7或以上版本
+- Maven 3.6或以上版本
+- JavaFX运行时环境
+
+九、部署说明
+----------------------------------------
+1. 安装MySQL数据库
+2. 创建数据库：CREATE DATABASE bookstore;
+3. 执行初始化脚本：database/init.sql
+4. 配置数据库连接参数（DBUtil.java）
+5. 使用Maven编译项目：mvn clean compile
+6. 运行项目：mvn javafx:run 或使用run.bat
+
+十、注意事项
+----------------------------------------
+1. 确保MySQL服务正常运行
+2. 检查数据库连接参数配置
+3. 确保JavaFX运行时环境正确安装
+4. 注意数据库字符集设置为utf8
+5. 系统使用明文密码存储，生产环境需要加密处理
+
+========================================
+文档更新时间：2024年
+版本：v1.0
+========================================

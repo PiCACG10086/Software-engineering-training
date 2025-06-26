@@ -99,6 +99,14 @@ public interface UserService {
     boolean resetPassword(Integer userId, String newPassword);
     
     /**
+     * 更新用户密码
+     * @param userId 用户ID
+     * @param newPassword 新密码
+     * @return 更新成功返回true，否则返回false
+     */
+    boolean updatePassword(Integer userId, String newPassword);
+    
+    /**
      * 检查用户名是否可用
      * @param username 用户名
      * @return 可用返回true，否则返回false

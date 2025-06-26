@@ -14,12 +14,16 @@ import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.stage.Stage;
+import javafx.application.Platform;
 
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.Optional;
+import java.util.Timer;
+import java.util.TimerTask;
 
 /**
  * 管理员主界面控制器
@@ -143,6 +147,10 @@ public class AdminMainController extends BaseController implements Initializable
     private OrderService orderService;
     private UserService userService;
     
+    // 自动刷新定时器
+    private Timer autoRefreshTimer;
+    private static final int AUTO_REFRESH_INTERVAL = 30000; // 30秒自动刷新
+    
     // 当前编辑的图书
     private Book currentEditingBook;
     
@@ -163,6 +171,9 @@ public class AdminMainController extends BaseController implements Initializable
         
         // 加载数据
         loadAllData();
+        
+        // 启动自动刷新
+        startAutoRefresh();
     }
     
     @Override
@@ -832,7 +843,7 @@ public class AdminMainController extends BaseController implements Initializable
                 sb.append("  作者：").append(book.getAuthor()).append("\n");
                 sb.append("  出版社：").append(book.getPublisher()).append("\n");
                 sb.append("  ISBN：").append(book.getIsbn()).append("\n");
-                sb.append("  单价：¥").append(detail.getUnitPrice()).append("\n");
+                sb.append("  单价：¥").append(detail.getPrice()).append("\n");
                 sb.append("  购买数量：").append(detail.getQuantity()).append("本\n");
                 sb.append("  小计：¥").append(detail.getSubtotal()).append("\n");
                 if (i < details.size() - 1) {
@@ -1117,6 +1128,50 @@ public class AdminMainController extends BaseController implements Initializable
             return false;
         }
         return true;
+    }
+    
+    /**
+     * 启动自动刷新功能
+     */
+    private void startAutoRefresh() {
+        if (autoRefreshTimer != null) {
+            autoRefreshTimer.cancel();
+        }
+        
+        autoRefreshTimer = new Timer(true); // 设置为守护线程
+        autoRefreshTimer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                // 在JavaFX应用线程中执行刷新操作
+                Platform.runLater(() -> {
+                    try {
+                        // 刷新所有数据
+                        loadAllData();
+                    } catch (Exception e) {
+                        // 静默处理异常，避免干扰用户操作
+                        System.err.println("自动刷新失败: " + e.getMessage());
+                    }
+                });
+            }
+        }, AUTO_REFRESH_INTERVAL, AUTO_REFRESH_INTERVAL);
+    }
+    
+    /**
+     * 停止自动刷新功能
+     */
+    private void stopAutoRefresh() {
+        if (autoRefreshTimer != null) {
+            autoRefreshTimer.cancel();
+            autoRefreshTimer = null;
+        }
+    }
+    
+    /**
+     * 重启自动刷新功能
+     */
+    public void restartAutoRefresh() {
+        stopAutoRefresh();
+        startAutoRefresh();
     }
     
     /**

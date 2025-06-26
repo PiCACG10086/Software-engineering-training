@@ -11,7 +11,7 @@ public class OrderDetail {
     private Integer orderId;
     private Integer bookId;
     private Integer quantity;
-    private BigDecimal unitPrice;
+    private BigDecimal price;
     
     // 关联对象
     private Book book;
@@ -26,13 +26,13 @@ public class OrderDetail {
      * @param orderId 订单ID
      * @param bookId 教材ID
      * @param quantity 数量
-     * @param unitPrice 单价
+     * @param price 单价
      */
-    public OrderDetail(Integer orderId, Integer bookId, Integer quantity, BigDecimal unitPrice) {
+    public OrderDetail(Integer orderId, Integer bookId, Integer quantity, BigDecimal price) {
         this.orderId = orderId;
         this.bookId = bookId;
         this.quantity = quantity;
-        this.unitPrice = unitPrice;
+        this.price = price;
     }
 
     /**
@@ -40,8 +40,8 @@ public class OrderDetail {
      * @return 小计金额
      */
     public BigDecimal getSubtotal() {
-        if (unitPrice != null && quantity != null) {
-            return unitPrice.multiply(new BigDecimal(quantity));
+        if (price != null && quantity != null) {
+            return price.multiply(new BigDecimal(quantity));
         }
         return BigDecimal.ZERO;
     }
@@ -88,12 +88,12 @@ public class OrderDetail {
         this.quantity = quantity;
     }
 
-    public BigDecimal getUnitPrice() {
-        return unitPrice;
+    public BigDecimal getPrice() {
+        return price;
     }
 
-    public void setUnitPrice(BigDecimal unitPrice) {
-        this.unitPrice = unitPrice;
+    public void setPrice(BigDecimal price) {
+        this.price = price;
     }
 
     public Book getBook() {
@@ -111,7 +111,7 @@ public class OrderDetail {
                 ", orderId=" + orderId +
                 ", bookId=" + bookId +
                 ", quantity=" + quantity +
-                ", unitPrice=" + unitPrice +
+                ", price=" + price +
                 '}';
     }
 

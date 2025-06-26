@@ -10,12 +10,21 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.layout.VBox;
+import javafx.fxml.FXMLLoader;
+import javafx.application.Platform;
+import javafx.scene.Scene;
+import javafx.stage.Stage;
+import javafx.stage.Modality;
+import java.io.IOException;
 
 import java.math.BigDecimal;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.Optional;
+import java.util.Timer;
+import java.util.TimerTask;
 
 /**
  * 学生主界面控制器
@@ -106,6 +115,10 @@ public class StudentMainController extends BaseController implements Initializab
     // 购物车数据
     private ObservableList<CartItem> cartItems;
     
+    // 自动刷新定时器
+    private Timer autoRefreshTimer;
+    private static final int AUTO_REFRESH_INTERVAL = 30000; // 30秒自动刷新
+    
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         // 初始化服务
@@ -126,6 +139,9 @@ public class StudentMainController extends BaseController implements Initializab
         
         // 加载数据
         loadBooks();
+        
+        // 启动自动刷新
+        startAutoRefresh();
     }
     
     @Override
@@ -519,8 +535,134 @@ public class StudentMainController extends BaseController implements Initializab
      */
     @FXML
     private void handleChangePassword() {
-        // 这里可以打开修改密码对话框
-        showInfoAlert("功能提示", "修改密码功能待实现");
+        showChangePasswordDialog();
+    }
+    
+    /**
+     * 显示修改密码对话框
+     */
+    private void showChangePasswordDialog() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/change_password_dialog.fxml"));
+            VBox dialogContent = loader.load();
+            
+            // 获取对话框中的控件
+            PasswordField currentPasswordField = (PasswordField) dialogContent.lookup("#currentPasswordField");
+            PasswordField newPasswordField = (PasswordField) dialogContent.lookup("#newPasswordField");
+            PasswordField confirmPasswordField = (PasswordField) dialogContent.lookup("#confirmPasswordField");
+            Button changeButton = (Button) dialogContent.lookup("#changeButton");
+            Button cancelButton = (Button) dialogContent.lookup("#cancelButton");
+            
+            // 创建新的Stage作为对话框窗口
+            Stage dialogStage = new Stage();
+            dialogStage.setTitle("修改密码");
+            dialogStage.initModality(Modality.WINDOW_MODAL);
+            dialogStage.initOwner(changePasswordButton.getScene().getWindow());
+            dialogStage.setResizable(false);
+            
+            Scene dialogScene = new Scene(dialogContent);
+            dialogStage.setScene(dialogScene);
+            
+            // 设置按钮事件
+            changeButton.setOnAction(e -> {
+                String currentPassword = currentPasswordField.getText();
+                String newPassword = newPasswordField.getText();
+                String confirmPassword = confirmPasswordField.getText();
+                
+                // 验证输入
+                if (currentPassword.isEmpty() || newPassword.isEmpty() || confirmPassword.isEmpty()) {
+                    showWarningAlert("输入错误", "请填写所有密码字段");
+                    return;
+                }
+                
+                if (!newPassword.equals(confirmPassword)) {
+                    showWarningAlert("密码不匹配", "新密码和确认密码不一致");
+                    return;
+                }
+                
+                if (newPassword.length() < 6) {
+                    showWarningAlert("密码太短", "新密码长度至少为6位");
+                    return;
+                }
+                
+                // 验证当前密码
+                 if (!userService.validatePassword(currentUser.getId(), currentPassword)) {
+                     showWarningAlert("密码错误", "当前密码不正确");
+                     return;
+                 }
+                
+                // 更新密码
+                if (userService.updatePassword(currentUser.getId(), newPassword)) {
+                    // 先关闭修改密码对话框
+                    dialogStage.close();
+                    
+                    // 显示成功提示
+                    showInfoAlert("修改成功", "密码修改成功，请重新登录");
+                    
+                    // 密码修改成功后返回登录界面（这会关闭当前主窗口）
+                    returnToLogin();
+                } else {
+                    showErrorAlert("修改失败", "密码修改失败，请重试");
+                }
+            });
+            
+            cancelButton.setOnAction(e -> dialogStage.close());
+            
+            // 显示对话框
+            dialogStage.showAndWait();
+        } catch (Exception e) {
+            showErrorAlert("加载失败", "加载修改密码对话框失败：" + e.getMessage());
+        }
+    }
+    
+
+    
+    /**
+     * 启动自动刷新功能
+     */
+    private void startAutoRefresh() {
+        if (autoRefreshTimer != null) {
+            autoRefreshTimer.cancel();
+        }
+        
+        autoRefreshTimer = new Timer(true); // 设置为守护线程
+        autoRefreshTimer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                // 在JavaFX应用线程中执行刷新操作
+                Platform.runLater(() -> {
+                    try {
+                        // 刷新图书列表
+                        loadBooks();
+                        // 刷新订单列表（如果当前用户已设置）
+                        if (currentUser != null) {
+                            loadOrders();
+                        }
+                    } catch (Exception e) {
+                        // 静默处理异常，避免干扰用户操作
+                        System.err.println("自动刷新失败: " + e.getMessage());
+                    }
+                });
+            }
+        }, AUTO_REFRESH_INTERVAL, AUTO_REFRESH_INTERVAL);
+    }
+    
+    /**
+     * 停止自动刷新功能
+     */
+    private void stopAutoRefresh() {
+        if (autoRefreshTimer != null) {
+            autoRefreshTimer.cancel();
+            autoRefreshTimer = null;
+        }
+    }
+    
+    /**
+     * 重启自动刷新功能
+     */
+    public void restartAutoRefresh() {
+        stopAutoRefresh();
+        startAutoRefresh();
     }
     
 
@@ -567,7 +709,7 @@ public class StudentMainController extends BaseController implements Initializab
                 sb.append("  作者：").append(book.getAuthor()).append("\n");
                 sb.append("  出版社：").append(book.getPublisher()).append("\n");
                 sb.append("  ISBN：").append(book.getIsbn()).append("\n");
-                sb.append("  单价：¥").append(detail.getUnitPrice()).append("\n");
+                sb.append("  单价：¥").append(detail.getPrice()).append("\n");
                 sb.append("  购买数量：").append(detail.getQuantity()).append("本\n");
                 sb.append("  小计：¥").append(detail.getSubtotal()).append("\n");
                 if (i < details.size() - 1) {
@@ -618,5 +760,29 @@ public class StudentMainController extends BaseController implements Initializab
      */
     private void handleLogout() {
         handleLogout(logoutButton);
+    }
+    
+    /**
+     * 返回登录界面
+     */
+    private void returnToLogin() {
+        try {
+            // 清除当前用户信息
+            currentUser = null;
+            
+            // 加载登录界面
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/login.fxml"));
+            Scene loginScene = new Scene(loader.load(), 400, 300);
+            
+            // 获取当前窗口并切换到登录界面
+            Stage currentStage = (Stage) changePasswordButton.getScene().getWindow();
+            currentStage.setScene(loginScene);
+            currentStage.setTitle("用户登录");
+            currentStage.centerOnScreen();
+            
+        } catch (IOException e) {
+            showErrorAlert("跳转失败", "返回登录界面时发生错误：" + e.getMessage());
+            e.printStackTrace();
+        }
     }
 }

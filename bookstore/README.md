@@ -344,16 +344,16 @@ bookstore/
 2. 启动MySQL服务
 3. 创建数据库：
    ```sql
-   CREATE DATABASE university_bookstore;
+   CREATE DATABASE bookstore;
    ```
 4. 执行数据库初始化脚本：
    ```bash
-   mysql -u root -p university_bookstore < database/init.sql
+   mysql -u root -p bookstore < database/init.sql
    ```
    
    或者登录MySQL后执行：
    ```sql
-   USE university_bookstore;
+   USE bookstore;
    SOURCE database/init.sql;
    ```
 
@@ -362,7 +362,7 @@ bookstore/
 修改 `src/main/java/com/university/bookstore/util/DBUtil.java` 文件中的数据库连接参数：
 
 ```java
-private static final String DB_URL = "jdbc:mysql://localhost:3306/university_bookstore";
+private static final String DB_URL = "jdbc:mysql://localhost:3306/bookstore";
 private static final String DB_USERNAME = "root";  // 修改为你的数据库用户名
 private static final String DB_PASSWORD = "123456";  // 修改为你的数据库密码
 ```
@@ -411,16 +411,20 @@ mvn exec:java
 - 用户名：`admin`
 - 密码：`admin123`
 - 角色：管理员
+- 姓名：系统管理员
 
 ### 教师账号
-- 用户名：`teacher001` / `teacher002` / `teacher003`
+- 用户名：`teacher001` ~ `teacher006`
 - 密码：`teacher123`
 - 角色：教师
+- 姓名：张教授、李老师、王副教授、刘老师、陈教授、赵老师
 
 ### 学生账号
-- 用户名：`student001` / `student002` / `student003`
+- 用户名：`student001` ~ `student006`
 - 密码：`student123`
 - 角色：学生
+- 姓名：张小明、李小红、王小强、刘小芳、陈小华、赵小军
+- 学号：2021001 ~ 2021006
 
 ## 数据库表结构
 
@@ -488,7 +492,7 @@ mvn exec:java
 - 检查MySQL服务是否启动
 - 确认数据库连接参数是否正确（用户名: root, 密码: 123456）
 - 检查防火墙设置
-- 确保数据库 `university_bookstore` 已创建
+- 确保数据库 `bookstore` 已创建
 
 ### 2. JavaFX运行时错误
 

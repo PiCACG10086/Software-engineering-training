@@ -1,100 +1,33 @@
--- MySQL 5.5.40+
+-- 重置数据库脚本
+-- 删除所有表数据并重新插入初始数据
 
--- 创建数据库
-CREATE DATABASE IF NOT EXISTS bookstore DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
 USE bookstore;
 
--- 1. 用户表 (t_user)
-CREATE TABLE t_user (
-    id INT AUTO_INCREMENT PRIMARY KEY COMMENT '用户ID',
-    username VARCHAR(50) NOT NULL UNIQUE COMMENT '登录用户名',
-    password VARCHAR(255) NOT NULL COMMENT '密码',
-    role ENUM('STUDENT', 'TEACHER', 'ADMIN') NOT NULL COMMENT '用户角色',
-    name VARCHAR(100) NOT NULL COMMENT '真实姓名',
-    student_id VARCHAR(20) COMMENT '学号(仅学生使用)',
-    create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='用户表';
+-- 禁用外键检查（如果有的话）
+SET FOREIGN_KEY_CHECKS = 0;
 
+-- 清空所有表数据
+TRUNCATE TABLE t_cart;
+TRUNCATE TABLE t_order_item;
+TRUNCATE TABLE t_order;
+TRUNCATE TABLE t_book;
+TRUNCATE TABLE t_user;
 
+-- 重新启用外键检查
+SET FOREIGN_KEY_CHECKS = 1;
 
-
--- 4. 教材表 (t_book)
-CREATE TABLE t_book (
-    id INT AUTO_INCREMENT PRIMARY KEY COMMENT '图书ID',
-    title VARCHAR(200) NOT NULL COMMENT '书名',
-    author VARCHAR(100) NOT NULL COMMENT '作者',
-    publisher VARCHAR(100) NOT NULL COMMENT '出版社',
-    isbn VARCHAR(20) UNIQUE COMMENT 'ISBN号',
-    price DECIMAL(10,2) NOT NULL COMMENT '价格',
-    stock INT DEFAULT 0 COMMENT '库存数量',
-    description TEXT COMMENT '图书描述',
-    create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='图书表';
-
-
-
--- 6. 订单表 (t_order)
-CREATE TABLE t_order (
-    id INT AUTO_INCREMENT PRIMARY KEY COMMENT '订单ID',
-    order_number VARCHAR(50) UNIQUE COMMENT '订单号',
-    user_id INT NOT NULL COMMENT '用户ID',
-    total_amount DECIMAL(10,2) NOT NULL COMMENT '总金额',
-    status ENUM('PENDING', 'PAID', 'CONFIRMED', 'SHIPPED', 'COMPLETED', 'CANCELLED') DEFAULT 'PENDING' COMMENT '订单状态',
-    create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    FOREIGN KEY (user_id) REFERENCES t_user(id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='订单表';
-
--- 7. 订单详情表 (t_order_item)
-CREATE TABLE t_order_item (
-    id INT AUTO_INCREMENT PRIMARY KEY COMMENT '订单项ID',
-    order_id INT NOT NULL COMMENT '订单ID',
-    book_id INT NOT NULL COMMENT '图书ID',
-    quantity INT NOT NULL COMMENT '数量',
-    price DECIMAL(10,2) NOT NULL COMMENT '单价',
-    FOREIGN KEY (order_id) REFERENCES t_order(id),
-    FOREIGN KEY (book_id) REFERENCES t_book(id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='订单详情表';
-
--- 8. 购物车表 (t_cart)
-CREATE TABLE t_cart (
-    id INT AUTO_INCREMENT PRIMARY KEY COMMENT '购物车ID',
-    user_id INT NOT NULL COMMENT '用户ID',
-    book_id INT NOT NULL COMMENT '图书ID',
-    quantity INT NOT NULL COMMENT '数量',
-    create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    FOREIGN KEY (user_id) REFERENCES t_user(id),
-    FOREIGN KEY (book_id) REFERENCES t_book(id),
-    UNIQUE KEY unique_user_book (user_id, book_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='购物车表';
-
--- 插入初始数据
-
--- 插入管理员用户
-INSERT INTO t_user (username, password, role, name) VALUES
-('admin', 'admin123', 'ADMIN', '系统管理员');
-
--- 插入教师用户
-INSERT INTO t_user (username, password, role, name) VALUES
-('teacher001', 'teacher123', 'TEACHER', '张教授'),
-('teacher002', 'teacher123', 'TEACHER', '李老师'),
-('teacher003', 'teacher123', 'TEACHER', '王副教授'),
-('teacher004', 'teacher123', 'TEACHER', '刘老师'),
-('teacher005', 'teacher123', 'TEACHER', '陈教授'),
-('teacher006', 'teacher123', 'TEACHER', '赵老师');
-
--- 插入学生用户
+-- 重新插入用户数据
 INSERT INTO t_user (username, password, role, name, student_id) VALUES
-('student001', 'student123', 'STUDENT', '张小明', '2021001'),
-('student002', 'student123', 'STUDENT', '李小红', '2021002'),
-('student003', 'student123', 'STUDENT', '王小强', '2021003'),
-('student004', 'student123', 'STUDENT', '刘小芳', '2021004'),
-('student005', 'student123', 'STUDENT', '陈小华', '2021005'),
-('student006', 'student123', 'STUDENT', '赵小军', '2021006');
+('admin', 'admin123', 'ADMIN', '系统管理员', NULL),
+('teacher1', 'teacher123', 'TEACHER', '张教授', NULL),
+('teacher2', 'teacher123', 'TEACHER', '李教授', NULL),
+('student1', 'student123', 'STUDENT', '王小明', '2021001'),
+('student2', 'student123', 'STUDENT', '李小红', '2021002'),
+('student3', 'student123', 'STUDENT', '张小华', '2021003'),
+('student4', 'student123', 'STUDENT', '刘小强', '2021004'),
+('student5', 'student123', 'STUDENT', '陈小美', '2021005');
 
-
-
--- 插入图书数据
+-- 重新插入图书数据
 INSERT INTO t_book (title, author, publisher, isbn, price, stock, description) VALUES
 ('数据结构(C语言版)', '严蔚敏', '清华大学出版社', '9787302147510', 45.00, 100, '经典的数据结构教材，适合计算机专业学生'),
 ('算法导论(原书第3版)', '托马斯·科尔曼', '机械工业出版社', '9787111407010', 128.00, 80, '算法领域的权威教材'),
@@ -128,6 +61,14 @@ INSERT INTO t_book (title, author, publisher, isbn, price, stock, description) V
 ('编译原理', '陈火旺', '国防工业出版社', '9787118456789', 69.00, 35, '编译器设计原理'),
 ('数字信号处理', '奥本海姆', '电子工业出版社', '9787121567890', 95.00, 30, '数字信号处理经典教材');
 
--- 数据库初始化完成
--- 注意：当前系统主要使用 t_user、t_book、t_order、t_order_item、t_cart 这5个核心表
--- 其他表（t_course、t_course_book）为扩展功能预留，当前未使用
+-- 显示重新插入的数据统计
+SELECT '用户数据' AS '表名', COUNT(*) AS '记录数' FROM t_user
+UNION ALL
+SELECT '图书数据' AS '表名', COUNT(*) AS '记录数' FROM t_book
+UNION ALL
+SELECT '订单数据' AS '表名', COUNT(*) AS '记录数' FROM t_order
+UNION ALL
+SELECT '购物车数据' AS '表名', COUNT(*) AS '记录数' FROM t_cart;
+
+-- 数据库重置完成
+SELECT '数据库重置完成！所有表数据已清空并重新插入初始数据。' AS '状态';

@@ -53,7 +53,7 @@ public class OrderDAOImpl implements OrderDAO {
 
     @Override
     public List<Order> findByStudentId(Integer studentId) {
-        String sql = "SELECT * FROM t_order WHERE student_id = ? ORDER BY create_time DESC";
+        String sql = "SELECT * FROM t_order WHERE user_id = ? ORDER BY create_time DESC";
         List<Order> orders = new ArrayList<>();
         
         try (Connection conn = DBUtil.getConnection();
@@ -149,27 +149,39 @@ public class OrderDAOImpl implements OrderDAO {
 
     @Override
     public boolean insert(Order order) {
-        String sql = "INSERT INTO t_order (order_number, student_id, total_price, status, create_time) " +
-                    "VALUES (?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO t_order (user_id, total_amount, status, create_time) " +
+                    "VALUES (?, ?, ?, ?)";
+        
+        System.out.println("[DEBUG] 开始插入订单到数据库");
+        System.out.println("[DEBUG] 订单信息 - 学生ID: " + order.getStudentId() + ", 总价: " + order.getTotalPrice() + ", 状态: " + order.getStatus());
         
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             
-            stmt.setString(1, order.getOrderNumber());
-            stmt.setLong(2, order.getStudentId());
-            stmt.setBigDecimal(3, order.getTotalPrice());
-            stmt.setString(4, order.getStatus().name());
-            stmt.setTimestamp(5, new Timestamp(order.getCreateTime().getTime()));
+            stmt.setInt(1, order.getStudentId());
+            stmt.setBigDecimal(2, order.getTotalPrice());
+            stmt.setString(3, order.getStatus().name());
+            stmt.setTimestamp(4, new Timestamp(order.getCreateTime().getTime()));
             
+            System.out.println("[DEBUG] 执行SQL: " + sql);
             int affectedRows = stmt.executeUpdate();
+            System.out.println("[DEBUG] 影响行数: " + affectedRows);
+            
             if (affectedRows > 0) {
                 ResultSet generatedKeys = stmt.getGeneratedKeys();
                 if (generatedKeys.next()) {
-                    order.setId((int) generatedKeys.getLong(1));
+                    int generatedId = (int) generatedKeys.getLong(1);
+                    order.setId(generatedId);
+                    System.out.println("[DEBUG] 订单插入成功，生成的订单ID: " + generatedId);
                 }
                 return true;
+            } else {
+                System.out.println("[ERROR] 订单插入失败：没有行被影响");
             }
         } catch (SQLException e) {
+            System.out.println("[ERROR] 订单插入失败，SQL异常: " + e.getMessage());
+            System.out.println("[ERROR] SQL状态码: " + e.getSQLState());
+            System.out.println("[ERROR] 错误代码: " + e.getErrorCode());
             e.printStackTrace();
         }
         return false;
@@ -177,18 +189,17 @@ public class OrderDAOImpl implements OrderDAO {
 
     @Override
     public boolean update(Order order) {
-        String sql = "UPDATE orders SET order_number = ?, student_id = ?, total_price = ?, " +
+        String sql = "UPDATE t_order SET user_id = ?, total_amount = ?, " +
                     "status = ?, update_time = ? WHERE id = ?";
         
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             
-            stmt.setString(1, order.getOrderNumber());
-            stmt.setLong(2, order.getStudentId());
-            stmt.setBigDecimal(3, order.getTotalPrice());
-            stmt.setString(4, order.getStatus().name());
-            stmt.setTimestamp(5, new Timestamp(order.getUpdateTime().getTime()));
-            stmt.setLong(6, order.getId());
+            stmt.setInt(1, order.getStudentId());
+            stmt.setBigDecimal(2, order.getTotalPrice());
+            stmt.setString(3, order.getStatus().name());
+            stmt.setTimestamp(4, new Timestamp(order.getUpdateTime().getTime()));
+            stmt.setInt(5, order.getId());
             
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -231,7 +242,7 @@ public class OrderDAOImpl implements OrderDAO {
 
     @Override
     public List<OrderDetail> findOrderDetailsByOrderId(Integer orderId) {
-        String sql = "SELECT * FROM t_order_detail WHERE order_id = ?";
+        String sql = "SELECT * FROM t_order_item WHERE order_id = ?";
         List<OrderDetail> details = new ArrayList<>();
         
         try (Connection conn = DBUtil.getConnection();
@@ -251,8 +262,11 @@ public class OrderDAOImpl implements OrderDAO {
 
     @Override
     public boolean insertOrderDetail(OrderDetail orderDetail) {
-        String sql = "INSERT INTO t_order_detail (order_id, book_id, quantity, unit_price) " +
+        String sql = "INSERT INTO t_order_item (order_id, book_id, quantity, price) " +
                     "VALUES (?, ?, ?, ?)";
+        
+        System.out.println("[DEBUG] 开始插入订单详情到数据库");
+        System.out.println("[DEBUG] 订单详情信息 - 订单ID: " + orderDetail.getOrderId() + ", 图书ID: " + orderDetail.getBookId() + ", 数量: " + orderDetail.getQuantity() + ", 价格: " + orderDetail.getPrice());
         
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -260,17 +274,27 @@ public class OrderDAOImpl implements OrderDAO {
             stmt.setLong(1, orderDetail.getOrderId());
             stmt.setLong(2, orderDetail.getBookId());
             stmt.setInt(3, orderDetail.getQuantity());
-            stmt.setBigDecimal(4, orderDetail.getUnitPrice());
+            stmt.setBigDecimal(4, orderDetail.getPrice());
             
+            System.out.println("[DEBUG] 执行SQL: " + sql);
             int affectedRows = stmt.executeUpdate();
+            System.out.println("[DEBUG] 订单详情影响行数: " + affectedRows);
+            
             if (affectedRows > 0) {
                 ResultSet generatedKeys = stmt.getGeneratedKeys();
                 if (generatedKeys.next()) {
-                    orderDetail.setId((int) generatedKeys.getLong(1));
+                    int generatedId = (int) generatedKeys.getLong(1);
+                    orderDetail.setId(generatedId);
+                    System.out.println("[DEBUG] 订单详情插入成功，生成的ID: " + generatedId);
                 }
                 return true;
+            } else {
+                System.out.println("[ERROR] 订单详情插入失败：没有行被影响");
             }
         } catch (SQLException e) {
+            System.out.println("[ERROR] 订单详情插入失败，SQL异常: " + e.getMessage());
+            System.out.println("[ERROR] SQL状态码: " + e.getSQLState());
+            System.out.println("[ERROR] 错误代码: " + e.getErrorCode());
             e.printStackTrace();
         }
         return false;
@@ -346,7 +370,7 @@ public class OrderDAOImpl implements OrderDAO {
     }
 
     public int getStudentOrderCount(Long studentId) {
-        String sql = "SELECT COUNT(*) FROM orders WHERE student_id = ?";
+        String sql = "SELECT COUNT(*) FROM t_order WHERE user_id = ?";
         
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -368,14 +392,13 @@ public class OrderDAOImpl implements OrderDAO {
      */
     private Order mapResultSetToOrder(ResultSet rs) throws SQLException {
         Order order = new Order();
-        order.setId((int) rs.getLong("id"));
+        order.setId(rs.getInt("id"));
         order.setOrderNumber(rs.getString("order_number"));
-        order.setStudentId((int) rs.getLong("student_id"));
-        order.setTotalPrice(rs.getBigDecimal("total_price"));
+        order.setStudentId(rs.getInt("user_id"));
+        order.setTotalPrice(rs.getBigDecimal("total_amount"));
         order.setStatus(Order.OrderStatus.valueOf(rs.getString("status")));
         order.setCreateTime(rs.getTimestamp("create_time"));
-        // 数据库表中没有update_time字段，设置为null
-        order.setUpdateTime(null);
+        order.setUpdateTime(rs.getTimestamp("update_time"));
         return order;
     }
 
@@ -387,33 +410,47 @@ public class OrderDAOImpl implements OrderDAO {
     @Override
     public boolean insertOrderDetails(List<OrderDetail> orderDetails) {
         if (orderDetails == null || orderDetails.isEmpty()) {
+            System.out.println("[DEBUG] 订单详情列表为空，跳过插入");
             return true;
         }
         
-        String sql = "INSERT INTO t_order_detail (order_id, book_id, quantity, unit_price) VALUES (?, ?, ?, ?)";
+        System.out.println("[DEBUG] 开始批量插入订单详情，数量: " + orderDetails.size());
+        
+        String sql = "INSERT INTO t_order_item (order_id, book_id, quantity, price) VALUES (?, ?, ?, ?)";
         
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             
-            for (OrderDetail detail : orderDetails) {
+            for (int i = 0; i < orderDetails.size(); i++) {
+                OrderDetail detail = orderDetails.get(i);
+                System.out.println("[DEBUG] 准备插入第" + (i+1) + "个订单详情 - 订单ID: " + detail.getOrderId() + ", 图书ID: " + detail.getBookId() + ", 数量: " + detail.getQuantity() + ", 价格: " + detail.getPrice());
+                
                 stmt.setInt(1, detail.getOrderId());
                 stmt.setInt(2, detail.getBookId());
                 stmt.setInt(3, detail.getQuantity());
-                stmt.setBigDecimal(4, detail.getUnitPrice());
+                stmt.setBigDecimal(4, detail.getPrice());
                 stmt.addBatch();
             }
             
+            System.out.println("[DEBUG] 执行批量插入SQL: " + sql);
             int[] results = stmt.executeBatch();
+            System.out.println("[DEBUG] 批量插入结果数组长度: " + results.length);
             
             // 检查是否所有插入都成功
-            for (int result : results) {
-                if (result <= 0) {
+            for (int i = 0; i < results.length; i++) {
+                System.out.println("[DEBUG] 第" + (i+1) + "个订单详情插入结果: " + results[i]);
+                if (results[i] <= 0) {
+                    System.out.println("[ERROR] 第" + (i+1) + "个订单详情插入失败，影响行数: " + results[i]);
                     return false;
                 }
             }
             
+            System.out.println("[DEBUG] 所有订单详情插入成功");
             return true;
         } catch (SQLException e) {
+            System.out.println("[ERROR] 批量插入订单详情失败，SQL异常: " + e.getMessage());
+            System.out.println("[ERROR] SQL状态码: " + e.getSQLState());
+            System.out.println("[ERROR] 错误代码: " + e.getErrorCode());
             e.printStackTrace();
             return false;
         }
@@ -428,7 +465,7 @@ public class OrderDAOImpl implements OrderDAO {
         detail.setOrderId((int) rs.getLong("order_id"));
         detail.setBookId((int) rs.getLong("book_id"));
         detail.setQuantity(rs.getInt("quantity"));
-        detail.setUnitPrice(rs.getBigDecimal("unit_price"));
+        detail.setPrice(rs.getBigDecimal("price"));
         // subtotal通过getSubtotal()方法计算得出，不从数据库读取
         return detail;
     }
