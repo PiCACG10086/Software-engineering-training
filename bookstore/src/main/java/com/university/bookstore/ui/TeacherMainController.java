@@ -51,6 +51,10 @@ public class TeacherMainController extends BaseController implements Initializab
     
 
     
+    // 主界面控件
+    @FXML
+    private TabPane mainTabPane;
+    
     // 学生管理相关控件
     @FXML
     private TableView<User> studentTable;
@@ -382,6 +386,8 @@ public class TeacherMainController extends BaseController implements Initializab
         try {
             List<Order> studentOrders = orderService.getOrdersByStudentId(selectedStudent.getId());
             orderTable.setItems(FXCollections.observableArrayList(studentOrders));
+            // 切换到订单查看Tab（索引为2：图书浏览=0，学生管理=1，订单查看=2）
+            mainTabPane.getSelectionModel().select(2);
             showInfoAlert("查看成功", "已显示学生 " + selectedStudent.getName() + " 的订单");
         } catch (Exception e) {
             showErrorAlert("查看失败", "查看学生订单失败：" + e.getMessage());
@@ -398,9 +404,21 @@ public class TeacherMainController extends BaseController implements Initializab
             if (keyword.isEmpty()) {
                 orders = orderService.getAllOrders();
             } else {
-                // 根据订单号搜索
-                Order order = orderService.getOrderByOrderNumber(keyword);
-                orders = order != null ? Arrays.asList(order) : new ArrayList<>();
+                // 先尝试按订单号搜索
+                Order orderByNumber = orderService.getOrderByOrderNumber(keyword);
+                if (orderByNumber != null) {
+                    orders = Arrays.asList(orderByNumber);
+                } else {
+                    // 按学生姓名搜索
+                    orders = new ArrayList<>();
+                    List<Order> allOrders = orderService.getAllOrders();
+                    for (Order order : allOrders) {
+                        User student = userService.getUserById(order.getStudentId());
+                        if (student != null && student.getName().contains(keyword)) {
+                            orders.add(order);
+                        }
+                    }
+                }
             }
             orderTable.setItems(FXCollections.observableArrayList(orders));
         } catch (Exception e) {
