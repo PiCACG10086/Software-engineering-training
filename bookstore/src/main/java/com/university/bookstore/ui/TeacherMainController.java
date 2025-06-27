@@ -7,11 +7,16 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
 import javafx.application.Platform;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URL;
 import java.text.SimpleDateFormat;
@@ -85,6 +90,8 @@ public class TeacherMainController extends BaseController implements Initializab
     private Button refreshOrderButton;
     @FXML
     private Button viewOrderDetailsButton;
+    @FXML
+    private ComboBox<String> teacherOrderStatusFilter;
     
 
     
@@ -222,6 +229,15 @@ public class TeacherMainController extends BaseController implements Initializab
      * 初始化控件
      */
     private void initializeControls() {
+        // 初始化订单状态筛选器
+        teacherOrderStatusFilter.setItems(FXCollections.observableArrayList(
+            "全部订单", "待支付", "已支付", "已确认", "已发货", "已完成", "已取消"
+        ));
+        teacherOrderStatusFilter.setValue("全部订单");
+        
+        // 为订单状态筛选器添加选择监听器，实现自动筛选
+        teacherOrderStatusFilter.setOnAction(event -> refreshOrdersWithCurrentFilter());
+        
         // 图书浏览按钮事件
         bookSearchButton.setOnAction(event -> handleBookSearch());
         viewBookDetailsButton.setOnAction(event -> handleViewBookDetails());
@@ -235,7 +251,7 @@ public class TeacherMainController extends BaseController implements Initializab
         
         // 订单查看按钮事件
         orderSearchButton.setOnAction(event -> handleOrderSearch());
-        refreshOrderButton.setOnAction(event -> handleRefreshOrder());
+        refreshOrderButton.setOnAction(event -> loadOrders());
         viewOrderDetailsButton.setOnAction(event -> handleViewOrderDetails());
         
         // 其他按钮事件
@@ -392,6 +408,56 @@ public class TeacherMainController extends BaseController implements Initializab
         }
     }
     
+    /**
+     * 根据当前筛选条件刷新订单数据
+     */
+    private void refreshOrdersWithCurrentFilter() {
+        try {
+            String selectedStatus = teacherOrderStatusFilter.getValue();
+            if (selectedStatus == null) {
+                selectedStatus = "全部订单";
+            }
+            
+            List<Order> filteredOrders;
+            
+            if ("全部订单".equals(selectedStatus)) {
+                filteredOrders = orderService.getAllOrders();
+            } else {
+                // 将字符串转换为OrderStatus枚举
+                Order.OrderStatus status;
+                switch (selectedStatus) {
+                    case "待支付":
+                        status = Order.OrderStatus.PENDING;
+                        break;
+                    case "已支付":
+                        status = Order.OrderStatus.PAID;
+                        break;
+                    case "已确认":
+                        status = Order.OrderStatus.CONFIRMED;
+                        break;
+                    case "已发货":
+                        status = Order.OrderStatus.SHIPPED;
+                        break;
+                    case "已完成":
+                        status = Order.OrderStatus.COMPLETED;
+                        break;
+                    case "已取消":
+                        status = Order.OrderStatus.CANCELLED;
+                        break;
+                    default:
+                        status = Order.OrderStatus.PENDING;
+                        break;
+                }
+                filteredOrders = orderService.getOrdersByStatus(status);
+            }
+            
+            orderTable.setItems(FXCollections.observableArrayList(filteredOrders));
+            
+        } catch (Exception e) {
+            showErrorAlert("错误", "筛选订单失败: " + e.getMessage());
+        }
+    }
+    
     @FXML
     private void handleViewOrderDetails() {
         Order selectedOrder = orderTable.getSelectionModel().getSelectedItem();
@@ -410,7 +476,115 @@ public class TeacherMainController extends BaseController implements Initializab
     
     @FXML
     private void handleChangePassword() {
-        showInfoAlert("功能提示", "修改密码功能待实现");
+        showChangePasswordDialog();
+    }
+    
+    /**
+     * 显示修改密码对话框
+     */
+    private void showChangePasswordDialog() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/change_password_dialog.fxml"));
+            VBox dialogContent = loader.load();
+            
+            // 获取对话框中的控件
+            PasswordField currentPasswordField = (PasswordField) dialogContent.lookup("#currentPasswordField");
+            PasswordField newPasswordField = (PasswordField) dialogContent.lookup("#newPasswordField");
+            PasswordField confirmPasswordField = (PasswordField) dialogContent.lookup("#confirmPasswordField");
+            Button changeButton = (Button) dialogContent.lookup("#changeButton");
+            Button cancelButton = (Button) dialogContent.lookup("#cancelButton");
+            
+            // 创建对话框
+            Dialog<ButtonType> dialog = new Dialog<>();
+            dialog.setTitle("修改密码");
+            dialog.getDialogPane().setContent(dialogContent);
+            dialog.getDialogPane().getButtonTypes().addAll(ButtonType.CANCEL);
+            
+            // 隐藏默认的取消按钮
+            dialog.getDialogPane().lookupButton(ButtonType.CANCEL).setVisible(false);
+            
+            // 设置对话框结果转换器
+            dialog.setResultConverter(dialogButton -> {
+                return null;
+            });
+            
+            // 修改按钮事件
+            changeButton.setOnAction(e -> {
+                String currentPassword = currentPasswordField.getText().trim();
+                String newPassword = newPasswordField.getText().trim();
+                String confirmPassword = confirmPasswordField.getText().trim();
+                
+                if (validatePasswordForm(currentPassword, newPassword, confirmPassword)) {
+                    try {
+                        if (userService.changePassword(currentUser.getId(), currentPassword, newPassword)) {
+                            // 先关闭修改密码对话框
+                            dialog.close();
+                            
+                            // 显示成功提示
+                            showInfoAlert("修改成功", "密码已修改成功，请重新登录");
+                            
+                            // 跳转到登录界面并关闭当前主窗口
+                            try {
+                                // 清除当前用户信息
+                                currentUser = null;
+                                
+                                // 获取主窗口（通过主界面控件获取）
+                                Stage mainStage = (Stage) bookTable.getScene().getWindow();
+                                
+                                // 加载登录界面
+                                FXMLLoader loginLoader = new FXMLLoader(getClass().getResource("/fxml/login.fxml"));
+                                Scene loginScene = new Scene(loginLoader.load(), 400, 300);
+                                
+                                // 切换到登录界面
+                                mainStage.setScene(loginScene);
+                                mainStage.setTitle("用户登录");
+                                mainStage.centerOnScreen();
+                                
+                            } catch (IOException ioEx) {
+                                showErrorAlert("跳转失败", "跳转到登录界面失败：" + ioEx.getMessage());
+                                ioEx.printStackTrace();
+                            }
+                        } else {
+                            showErrorAlert("修改失败", "当前密码不正确或修改失败，请重试");
+                        }
+                    } catch (Exception ex) {
+                        showErrorAlert("修改失败", "修改密码失败：" + ex.getMessage());
+                    }
+                }
+            });
+            
+            // 取消按钮事件
+            cancelButton.setOnAction(e -> dialog.close());
+            
+            dialog.showAndWait();
+            
+        } catch (Exception e) {
+            showErrorAlert("加载失败", "加载修改密码对话框失败：" + e.getMessage());
+        }
+    }
+    
+    /**
+     * 验证密码表单
+     */
+    private boolean validatePasswordForm(String currentPassword, String newPassword, String confirmPassword) {
+        if (!validateNotEmpty(currentPassword, "当前密码")) {
+            return false;
+        }
+        if (!validateNotEmpty(newPassword, "新密码")) {
+            return false;
+        }
+        if (!validateNotEmpty(confirmPassword, "确认密码")) {
+            return false;
+        }
+        if (!newPassword.equals(confirmPassword)) {
+            showWarningAlert("验证失败", "新密码和确认密码不一致");
+            return false;
+        }
+        if (newPassword.length() < 6) {
+            showWarningAlert("验证失败", "新密码长度不能少于6位");
+            return false;
+        }
+        return true;
     }
     
 
@@ -535,8 +709,11 @@ public class TeacherMainController extends BaseController implements Initializab
                 // 在JavaFX应用线程中执行刷新操作
                 Platform.runLater(() -> {
                     try {
-                        // 刷新所有数据
-                        loadAllData();
+                        // 刷新图书和学生数据
+                        loadBooks();
+                        loadStudents();
+                        // 对于订单数据，保持当前筛选状态
+                        refreshOrdersWithCurrentFilter();
                     } catch (Exception e) {
                         // 静默处理异常，避免干扰用户操作
                         System.err.println("自动刷新失败: " + e.getMessage());

@@ -938,6 +938,15 @@ public class AdminMainController extends BaseController implements Initializable
                 roleComboBox.setValue(user.getRole().toString());
                 studentIdField.setText(user.getStudentId());
                 passwordField.setPromptText("留空则不修改密码");
+                
+                // 如果编辑的是当前登录的管理员，不允许修改角色
+                if (currentUser != null && currentUser.getId().equals(user.getId()) && 
+                    currentUser.getRole() == User.UserRole.ADMIN) {
+                    roleComboBox.setDisable(true);
+                    // 只允许管理员修改自己的密码
+                    nameField.setEditable(false);
+                    studentIdField.setEditable(false);
+                }
             } else {
                 roleComboBox.setValue("STUDENT"); // 默认选择学生角色
             }
@@ -1102,6 +1111,18 @@ public class AdminMainController extends BaseController implements Initializable
         }
         if (isNewUser && !validateNotEmpty(passwordField.getText(), "密码")) {
             return false;
+        }
+        // 验证密码长度（新用户或修改密码时）
+        if (isNewUser || !passwordField.getText().trim().isEmpty()) {
+            String password = passwordField.getText().trim();
+            if (password.length() < 6) {
+                showWarningAlert("验证失败", "密码长度不能少于6位");
+                return false;
+            }
+            if (password.length() > 20) {
+                showWarningAlert("验证失败", "密码长度不能超过20位");
+                return false;
+            }
         }
         return true;
     }
