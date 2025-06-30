@@ -369,8 +369,8 @@ public class AdminMainController extends BaseController implements Initializable
         if (bookPagination != null) {
             bookPagination.setPageFactory(pageIndex -> {
                 currentBookPage = pageIndex + 1;
-                loadBooksWithPagination();
-                return bookTable;
+                loadBooksWithPaginationOnly();
+                return new VBox(); // 返回空的VBox，避免布局问题
             });
         }
         
@@ -378,8 +378,8 @@ public class AdminMainController extends BaseController implements Initializable
         if (orderPagination != null) {
             orderPagination.setPageFactory(pageIndex -> {
                 currentOrderPage = pageIndex + 1;
-                loadOrdersWithPagination();
-                return orderTable;
+                loadOrdersWithPaginationOnly();
+                return new VBox(); // 返回空的VBox，避免布局问题
             });
         }
         
@@ -387,8 +387,8 @@ public class AdminMainController extends BaseController implements Initializable
         if (userPagination != null) {
             userPagination.setPageFactory(pageIndex -> {
                 currentUserPage = pageIndex + 1;
-                loadUsersWithPagination();
-                return userTable;
+                loadUsersWithPaginationOnly();
+                return new VBox(); // 返回空的VBox，避免布局问题
             });
         }
     }
@@ -430,6 +430,34 @@ public class AdminMainController extends BaseController implements Initializable
                 bookPagination.setPageCount(totalBookPages);
                 bookPagination.setCurrentPageIndex(currentBookPage - 1);
             }
+            
+        } catch (Exception e) {
+            showErrorAlert("加载失败", "加载图书数据失败：" + e.getMessage());
+        }
+    }
+    
+    /**
+     * 仅加载图书数据，不更新分页控件（避免循环调用）
+     */
+    private void loadBooksWithPaginationOnly() {
+        try {
+            List<Book> allBooks;
+            if (currentBookSearchKeyword.isEmpty()) {
+                allBooks = bookService.getAllBooks();
+            } else {
+                allBooks = bookService.searchBooks(currentBookSearchKeyword);
+            }
+            
+            // 计算总页数
+            totalBookPages = (int) Math.ceil((double) allBooks.size() / ITEMS_PER_PAGE);
+            if (totalBookPages == 0) totalBookPages = 1;
+            
+            // 获取当前页的数据
+            int startIndex = (currentBookPage - 1) * ITEMS_PER_PAGE;
+            int endIndex = Math.min(startIndex + ITEMS_PER_PAGE, allBooks.size());
+            
+            List<Book> pageBooks = allBooks.subList(startIndex, endIndex);
+            bookTable.setItems(FXCollections.observableArrayList(pageBooks));
             
         } catch (Exception e) {
             showErrorAlert("加载失败", "加载图书数据失败：" + e.getMessage());
@@ -511,6 +539,63 @@ public class AdminMainController extends BaseController implements Initializable
     }
     
     /**
+     * 仅加载订单数据，不更新分页控件（避免循环调用）
+     */
+    private void loadOrdersWithPaginationOnly() {
+        try {
+            List<Order> allOrders;
+            if (!currentOrderSearchKeyword.isEmpty()) {
+                // 根据订单号搜索
+                Order order = orderService.getOrderByOrderNumber(currentOrderSearchKeyword);
+                allOrders = order != null ? Arrays.asList(order) : new ArrayList<>();
+            } else if ("全部订单".equals(currentOrderFilter)) {
+                allOrders = orderService.getAllOrders();
+            } else {
+                // 将字符串转换为OrderStatus枚举
+                Order.OrderStatus status;
+                switch (currentOrderFilter) {
+                    case "待支付":
+                        status = Order.OrderStatus.PENDING;
+                        break;
+                    case "已支付":
+                        status = Order.OrderStatus.PAID;
+                        break;
+                    case "已确认":
+                        status = Order.OrderStatus.CONFIRMED;
+                        break;
+                    case "已发货":
+                        status = Order.OrderStatus.SHIPPED;
+                        break;
+                    case "已完成":
+                        status = Order.OrderStatus.COMPLETED;
+                        break;
+                    case "已取消":
+                        status = Order.OrderStatus.CANCELLED;
+                        break;
+                    default:
+                        status = Order.OrderStatus.PENDING;
+                        break;
+                }
+                allOrders = orderService.getOrdersByStatus(status);
+            }
+            
+            // 计算总页数
+            totalOrderPages = (int) Math.ceil((double) allOrders.size() / ITEMS_PER_PAGE);
+            if (totalOrderPages == 0) totalOrderPages = 1;
+            
+            // 获取当前页的数据
+            int startIndex = (currentOrderPage - 1) * ITEMS_PER_PAGE;
+            int endIndex = Math.min(startIndex + ITEMS_PER_PAGE, allOrders.size());
+            
+            List<Order> pageOrders = allOrders.subList(startIndex, endIndex);
+            orderTable.setItems(FXCollections.observableArrayList(pageOrders));
+            
+        } catch (Exception e) {
+            showErrorAlert("加载失败", "加载订单数据失败：" + e.getMessage());
+        }
+    }
+    
+    /**
      * 加载用户数据
      */
     private void loadUsers() {
@@ -549,6 +634,36 @@ public class AdminMainController extends BaseController implements Initializable
                 userPagination.setPageCount(totalUserPages);
                 userPagination.setCurrentPageIndex(currentUserPage - 1);
             }
+            
+        } catch (Exception e) {
+            showErrorAlert("加载失败", "加载用户数据失败：" + e.getMessage());
+        }
+    }
+    
+    /**
+     * 仅加载用户数据，不更新分页控件（避免循环调用）
+     */
+    private void loadUsersWithPaginationOnly() {
+        try {
+            List<User> allUsers;
+            if (currentUserSearchKeyword.isEmpty()) {
+                allUsers = userService.getAllUsers();
+            } else {
+                // 根据用户名搜索
+                User user = userService.getUserByUsername(currentUserSearchKeyword);
+                allUsers = user != null ? Arrays.asList(user) : new ArrayList<>();
+            }
+            
+            // 计算总页数
+            totalUserPages = (int) Math.ceil((double) allUsers.size() / ITEMS_PER_PAGE);
+            if (totalUserPages == 0) totalUserPages = 1;
+            
+            // 获取当前页的数据
+            int startIndex = (currentUserPage - 1) * ITEMS_PER_PAGE;
+            int endIndex = Math.min(startIndex + ITEMS_PER_PAGE, allUsers.size());
+            
+            List<User> pageUsers = allUsers.subList(startIndex, endIndex);
+            userTable.setItems(FXCollections.observableArrayList(pageUsers));
             
         } catch (Exception e) {
             showErrorAlert("加载失败", "加载用户数据失败：" + e.getMessage());
