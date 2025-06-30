@@ -143,6 +143,8 @@ public class TeacherMainController extends BaseController implements Initializab
     
 
     
+
+    
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         // 初始化服务
@@ -1033,6 +1035,8 @@ public class TeacherMainController extends BaseController implements Initializab
                 });
             }
         }, AUTO_REFRESH_INTERVAL, AUTO_REFRESH_INTERVAL);
+        
+
     }
     
     /**
@@ -1043,6 +1047,7 @@ public class TeacherMainController extends BaseController implements Initializab
             autoRefreshTimer.cancel();
             autoRefreshTimer = null;
         }
+
     }
     
     /**
@@ -1052,6 +1057,8 @@ public class TeacherMainController extends BaseController implements Initializab
         stopAutoRefresh();
         startAutoRefresh();
     }
+    
+
     
     /**
      * 处理退出登录事件

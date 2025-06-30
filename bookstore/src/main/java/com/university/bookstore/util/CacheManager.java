@@ -92,6 +92,14 @@ public class CacheManager {
     }
     
     /**
+     * 根据键前缀清除缓存
+     * @param pattern 键前缀模式
+     */
+    public static void clearByPattern(String pattern) {
+        cache.entrySet().removeIf(entry -> entry.getKey().startsWith(pattern));
+    }
+    
+    /**
      * 清理过期的缓存项
      */
     private static void cleanExpiredItems() {

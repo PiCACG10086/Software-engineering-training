@@ -196,7 +196,12 @@ public class BookServiceImpl implements BookService {
             return false;
         }
         
-        return bookDAO.insert(book);
+        boolean result = bookDAO.insert(book);
+        if (result) {
+            // 清除相关缓存
+            CacheManager.clearByPattern("books_");
+        }
+        return result;
     }
     
     @Override
@@ -221,7 +226,12 @@ public class BookServiceImpl implements BookService {
             return false;
         }
         
-        return bookDAO.update(book);
+        boolean result = bookDAO.update(book);
+        if (result) {
+            // 清除相关缓存
+            CacheManager.clearByPattern("books_");
+        }
+        return result;
     }
     
     @Override
@@ -229,7 +239,12 @@ public class BookServiceImpl implements BookService {
         if (id == null) {
             return false;
         }
-        return bookDAO.delete(id);
+        boolean result = bookDAO.delete(id);
+        if (result) {
+            // 清除相关缓存
+            CacheManager.clearByPattern("books_");
+        }
+        return result;
     }
     
     @Override
@@ -237,7 +252,12 @@ public class BookServiceImpl implements BookService {
         if (id == null || stock == null || stock < 0) {
             return false;
         }
-        return bookDAO.updateStock(id, stock);
+        boolean result = bookDAO.updateStock(id, stock);
+        if (result) {
+            // 清除相关缓存
+            CacheManager.clearByPattern("books_");
+        }
+        return result;
     }
     
     @Override
@@ -251,7 +271,12 @@ public class BookServiceImpl implements BookService {
             return false;
         }
         
-        return bookDAO.reduceStock(id, quantity);
+        boolean result = bookDAO.reduceStock(id, quantity);
+        if (result) {
+            // 清除相关缓存
+            CacheManager.clearByPattern("books_");
+        }
+        return result;
     }
     
     @Override
@@ -266,7 +291,12 @@ public class BookServiceImpl implements BookService {
         }
         
         int newStock = book.getStock() + quantity;
-        return bookDAO.updateStock(id, newStock);
+        boolean result = bookDAO.updateStock(id, newStock);
+        if (result) {
+            // 清除相关缓存
+            CacheManager.clearByPattern("books_");
+        }
+        return result;
     }
     
     @Override

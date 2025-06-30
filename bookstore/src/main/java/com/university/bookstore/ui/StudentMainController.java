@@ -153,6 +153,8 @@ public class StudentMainController extends BaseController implements Initializab
     @FXML
     private Pagination orderPagination;
     
+
+    
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         // 初始化服务
@@ -949,6 +951,8 @@ public class StudentMainController extends BaseController implements Initializab
                 });
             }
         }, AUTO_REFRESH_INTERVAL, AUTO_REFRESH_INTERVAL);
+        
+
     }
     
     /**
@@ -959,6 +963,7 @@ public class StudentMainController extends BaseController implements Initializab
             autoRefreshTimer.cancel();
             autoRefreshTimer = null;
         }
+
     }
     
     /**
@@ -968,6 +973,8 @@ public class StudentMainController extends BaseController implements Initializab
         stopAutoRefresh();
         startAutoRefresh();
     }
+    
+
     
 
     
