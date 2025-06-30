@@ -57,7 +57,7 @@
                                        <Font name="System Bold" size="14.0" />
                                     </font>
                                  </Label>
-                                 <TableView fx:id="bookTable" VBox.vgrow="ALWAYS" minHeight="400.0" prefHeight="500.0">
+                                 <TableView fx:id="bookTable" VBox.vgrow="ALWAYS" minHeight="400.0" prefHeight="520.0">
                                     <columns>
                                        <TableColumn fx:id="bookTitleColumn" prefWidth="150.0" text="书名" />
                                        <TableColumn fx:id="bookAuthorColumn" prefWidth="100.0" text="作者" />
@@ -155,7 +155,7 @@
                                  <Font name="System Bold" size="14.0" />
                               </font>
                            </Label>
-                           <TableView fx:id="orderTable" VBox.vgrow="ALWAYS" minHeight="400.0" prefHeight="500.0">
+                           <TableView fx:id="orderTable" VBox.vgrow="ALWAYS" minHeight="400.0" prefHeight="520.0">
                               <columns>
                                  <TableColumn fx:id="orderNumberColumn" prefWidth="120.0" text="订单号" />
                                  <TableColumn fx:id="orderStudentColumn" prefWidth="100.0" text="学生" />
@@ -206,7 +206,7 @@
                                  <Font name="System Bold" size="14.0" />
                               </font>
                            </Label>
-                           <TableView fx:id="userTable" VBox.vgrow="ALWAYS" minHeight="400.0" prefHeight="500.0">
+                           <TableView fx:id="userTable" VBox.vgrow="ALWAYS" minHeight="400.0" prefHeight="520.0">
                               <columns>
                                  <TableColumn fx:id="userUsernameColumn" prefWidth="120.0" text="用户名" />
                                  <TableColumn fx:id="userNameColumn" prefWidth="100.0" text="姓名" />

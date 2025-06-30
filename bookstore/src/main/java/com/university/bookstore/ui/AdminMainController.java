@@ -11,7 +11,6 @@ import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.control.SelectionMode;
 import javafx.scene.layout.VBox;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.stage.Stage;
@@ -236,9 +235,6 @@ public class AdminMainController extends BaseController implements Initializable
             }
         });
         
-        // 设置表格选择模式为单选
-        bookTable.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
-        
         // 设置选择事件
         bookTable.getSelectionModel().selectedItemProperty().addListener(
             (obs, oldSelection, newSelection) -> {
@@ -281,9 +277,6 @@ public class AdminMainController extends BaseController implements Initializable
                 }
             }
         });
-        
-        // 设置表格选择模式为单选
-        orderTable.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
     }
     
     /**
@@ -303,9 +296,6 @@ public class AdminMainController extends BaseController implements Initializable
             }
             return new SimpleStringProperty("");
         });
-        
-        // 设置表格选择模式为单选
-        userTable.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
     }
     
     /**

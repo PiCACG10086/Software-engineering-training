@@ -119,6 +119,28 @@ public class TeacherMainController extends BaseController implements Initializab
     private Timer autoRefreshTimer;
     private static final int AUTO_REFRESH_INTERVAL = 5000; // 5秒自动刷新
     
+    // 搜索状态变量
+    private String currentBookSearchKeyword = "";
+    private String currentStudentSearchKeyword = "";
+    private String currentOrderSearchKeyword = "";
+    
+    // 分页相关字段
+    private static final int ITEMS_PER_PAGE = 20; // 每页显示的项目数
+    private int currentBookPage = 1; // 当前图书页码
+    private int totalBookPages = 1; // 图书总页数
+    private int currentStudentPage = 1; // 当前学生页码
+    private int totalStudentPages = 1; // 学生总页数
+    private int currentOrderPage = 1; // 当前订单页码
+    private int totalOrderPages = 1; // 订单总页数
+    
+    // 分页控件（需要在FXML中添加）
+    @FXML
+    private Pagination bookPagination;
+    @FXML
+    private Pagination studentPagination;
+    @FXML
+    private Pagination orderPagination;
+    
 
     
     @Override
@@ -137,11 +159,46 @@ public class TeacherMainController extends BaseController implements Initializab
         // 初始化控件
         initializeControls();
         
+        // 初始化分页控件事件
+        initializePagination();
+        
         // 加载数据
         loadAllData();
         
         // 启动自动刷新
         startAutoRefresh();
+    }
+    
+    /**
+     * 初始化分页控件
+     */
+    private void initializePagination() {
+        // 初始化图书分页控件
+        if (bookPagination != null) {
+            bookPagination.setPageFactory(pageIndex -> {
+                currentBookPage = pageIndex + 1;
+                loadBooksWithPaginationOnly();
+                return new VBox(); // 返回空的VBox，避免布局问题
+            });
+        }
+        
+        // 初始化学生分页控件
+        if (studentPagination != null) {
+            studentPagination.setPageFactory(pageIndex -> {
+                currentStudentPage = pageIndex + 1;
+                loadStudentsWithPaginationOnly();
+                return new VBox(); // 返回空的VBox，避免布局问题
+            });
+        }
+        
+        // 初始化订单分页控件
+        if (orderPagination != null) {
+            orderPagination.setPageFactory(pageIndex -> {
+                currentOrderPage = pageIndex + 1;
+                loadOrdersWithPaginationOnly();
+                return new VBox(); // 返回空的VBox，避免布局问题
+            });
+        }
     }
     
     @Override
@@ -296,12 +353,76 @@ public class TeacherMainController extends BaseController implements Initializab
      * 加载图书数据
      */
     private void loadBooks() {
+        currentBookSearchKeyword = "";
+        currentBookPage = 1;
+        loadBooksWithPagination();
+    }
+    
+    /**
+     * 分页加载图书数据
+     */
+    private void loadBooksWithPagination() {
         try {
-            List<Book> books = bookService.getAllBooks();
-            bookTable.setItems(FXCollections.observableArrayList(books));
+            List<Book> allBooks;
+            if (currentBookSearchKeyword.isEmpty()) {
+                allBooks = bookService.getAllBooks();
+            } else {
+                allBooks = bookService.searchBooks(currentBookSearchKeyword);
+            }
+            
+            // 计算总页数
+            totalBookPages = (int) Math.ceil((double) allBooks.size() / ITEMS_PER_PAGE);
+            if (totalBookPages == 0) totalBookPages = 1;
+            
+            // 获取当前页的数据
+            int startIndex = (currentBookPage - 1) * ITEMS_PER_PAGE;
+            int endIndex = Math.min(startIndex + ITEMS_PER_PAGE, allBooks.size());
+            
+            List<Book> pageBooks = allBooks.subList(startIndex, endIndex);
+            bookTable.setItems(FXCollections.observableArrayList(pageBooks));
+            
+            // 更新分页控件
+            if (bookPagination != null) {
+                bookPagination.setPageCount(totalBookPages);
+                bookPagination.setCurrentPageIndex(currentBookPage - 1);
+            }
+            
         } catch (Exception e) {
             showErrorAlert("加载失败", "加载图书数据失败：" + e.getMessage());
         }
+    }
+    
+    /**
+     * 仅加载图书数据，不更新分页控件（避免循环调用）
+     */
+    private void loadBooksWithPaginationOnly() {
+        try {
+            List<Book> allBooks;
+            if (currentBookSearchKeyword.isEmpty()) {
+                allBooks = bookService.getAllBooks();
+            } else {
+                allBooks = bookService.searchBooks(currentBookSearchKeyword);
+            }
+            
+            // 计算总页数
+            totalBookPages = (int) Math.ceil((double) allBooks.size() / ITEMS_PER_PAGE);
+            if (totalBookPages == 0) totalBookPages = 1;
+            
+            // 获取当前页的数据
+            int startIndex = (currentBookPage - 1) * ITEMS_PER_PAGE;
+            int endIndex = Math.min(startIndex + ITEMS_PER_PAGE, allBooks.size());
+            
+            List<Book> pageBooks = allBooks.subList(startIndex, endIndex);
+            bookTable.setItems(FXCollections.observableArrayList(pageBooks));
+            
+        } catch (Exception e) {
+            showErrorAlert("加载失败", "加载图书数据失败：" + e.getMessage());
+        }
+    }
+    
+    private void loadBooksWithCurrentSearch() {
+        currentBookPage = 1;
+        loadBooksWithPagination();
     }
     
 
@@ -310,21 +431,142 @@ public class TeacherMainController extends BaseController implements Initializab
      * 加载学生数据
      */
     private void loadStudents() {
+        currentStudentSearchKeyword = "";
+        currentStudentPage = 1;
+        loadStudentsWithPagination();
+    }
+    
+    /**
+     * 分页加载学生数据
+     */
+    private void loadStudentsWithPagination() {
         try {
-            List<User> students = userService.getAllStudents();
-            studentTable.setItems(FXCollections.observableArrayList(students));
+            List<User> allStudents;
+            if (currentStudentSearchKeyword.isEmpty()) {
+                allStudents = userService.getAllStudents();
+            } else {
+                // 根据姓名或学号搜索
+                allStudents = userService.getAllStudents().stream()
+                    .filter(student -> student.getName().contains(currentStudentSearchKeyword) || 
+                                     (student.getStudentId() != null && student.getStudentId().contains(currentStudentSearchKeyword)))
+                    .collect(java.util.stream.Collectors.toList());
+            }
+            
+            // 计算总页数
+            totalStudentPages = (int) Math.ceil((double) allStudents.size() / ITEMS_PER_PAGE);
+            if (totalStudentPages == 0) totalStudentPages = 1;
+            
+            // 获取当前页的数据
+            int startIndex = (currentStudentPage - 1) * ITEMS_PER_PAGE;
+            int endIndex = Math.min(startIndex + ITEMS_PER_PAGE, allStudents.size());
+            
+            List<User> pageStudents = allStudents.subList(startIndex, endIndex);
+            studentTable.setItems(FXCollections.observableArrayList(pageStudents));
+            
+            // 更新分页控件
+            if (studentPagination != null) {
+                studentPagination.setPageCount(totalStudentPages);
+                studentPagination.setCurrentPageIndex(currentStudentPage - 1);
+            }
+            
         } catch (Exception e) {
             showErrorAlert("加载失败", "加载学生数据失败：" + e.getMessage());
         }
     }
     
     /**
+     * 仅加载学生数据，不更新分页控件（避免循环调用）
+     */
+    private void loadStudentsWithPaginationOnly() {
+        try {
+            List<User> allStudents;
+            if (currentStudentSearchKeyword.isEmpty()) {
+                allStudents = userService.getAllStudents();
+            } else {
+                // 根据姓名或学号搜索
+                allStudents = userService.getAllStudents().stream()
+                    .filter(student -> student.getName().contains(currentStudentSearchKeyword) || 
+                                     (student.getStudentId() != null && student.getStudentId().contains(currentStudentSearchKeyword)))
+                    .collect(java.util.stream.Collectors.toList());
+            }
+            
+            // 计算总页数
+            totalStudentPages = (int) Math.ceil((double) allStudents.size() / ITEMS_PER_PAGE);
+            if (totalStudentPages == 0) totalStudentPages = 1;
+            
+            // 获取当前页的数据
+            int startIndex = (currentStudentPage - 1) * ITEMS_PER_PAGE;
+            int endIndex = Math.min(startIndex + ITEMS_PER_PAGE, allStudents.size());
+            
+            List<User> pageStudents = allStudents.subList(startIndex, endIndex);
+            studentTable.setItems(FXCollections.observableArrayList(pageStudents));
+            
+        } catch (Exception e) {
+            showErrorAlert("加载失败", "加载学生数据失败：" + e.getMessage());
+        }
+    }
+    
+    private void loadStudentsWithCurrentSearch() {
+        currentStudentPage = 1;
+        loadStudentsWithPagination();
+    }
+    
+    /**
      * 加载订单数据
      */
     private void loadOrders() {
+        currentOrderSearchKeyword = "";
+        currentOrderPage = 1;
+        loadOrdersWithPagination();
+    }
+    
+    /**
+     * 分页加载订单数据
+     */
+    private void loadOrdersWithPagination() {
         try {
-            List<Order> orders = orderService.getAllOrders();
-            orderTable.setItems(FXCollections.observableArrayList(orders));
+            List<Order> allOrders = orderService.getAllOrders();
+            
+            // 计算总页数
+            totalOrderPages = (int) Math.ceil((double) allOrders.size() / ITEMS_PER_PAGE);
+            if (totalOrderPages == 0) totalOrderPages = 1;
+            
+            // 获取当前页的数据
+            int startIndex = (currentOrderPage - 1) * ITEMS_PER_PAGE;
+            int endIndex = Math.min(startIndex + ITEMS_PER_PAGE, allOrders.size());
+            
+            List<Order> pageOrders = allOrders.subList(startIndex, endIndex);
+            orderTable.setItems(FXCollections.observableArrayList(pageOrders));
+            
+            // 更新分页控件
+            if (orderPagination != null) {
+                orderPagination.setPageCount(totalOrderPages);
+                orderPagination.setCurrentPageIndex(currentOrderPage - 1);
+            }
+            
+        } catch (Exception e) {
+            showErrorAlert("加载失败", "加载订单数据失败：" + e.getMessage());
+        }
+    }
+    
+    /**
+     * 仅加载订单数据，不更新分页控件（避免循环调用）
+     */
+    private void loadOrdersWithPaginationOnly() {
+        try {
+            List<Order> allOrders = orderService.getAllOrders();
+            
+            // 计算总页数
+            totalOrderPages = (int) Math.ceil((double) allOrders.size() / ITEMS_PER_PAGE);
+            if (totalOrderPages == 0) totalOrderPages = 1;
+            
+            // 获取当前页的数据
+            int startIndex = (currentOrderPage - 1) * ITEMS_PER_PAGE;
+            int endIndex = Math.min(startIndex + ITEMS_PER_PAGE, allOrders.size());
+            
+            List<Order> pageOrders = allOrders.subList(startIndex, endIndex);
+            orderTable.setItems(FXCollections.observableArrayList(pageOrders));
+            
         } catch (Exception e) {
             showErrorAlert("加载失败", "加载订单数据失败：" + e.getMessage());
         }
@@ -337,17 +579,8 @@ public class TeacherMainController extends BaseController implements Initializab
     @FXML
     private void handleBookSearch() {
         String keyword = bookSearchField.getText().trim();
-        try {
-            List<Book> books;
-            if (keyword.isEmpty()) {
-                books = bookService.getAllBooks();
-            } else {
-                books = bookService.searchBooks(keyword);
-            }
-            bookTable.setItems(FXCollections.observableArrayList(books));
-        } catch (Exception e) {
-            showErrorAlert("搜索失败", "搜索图书失败：" + e.getMessage());
-        }
+        currentBookSearchKeyword = keyword;
+        loadBooksWithCurrentSearch();
     }
     
     @FXML
@@ -368,21 +601,8 @@ public class TeacherMainController extends BaseController implements Initializab
     @FXML
     private void handleStudentSearch() {
         String keyword = studentSearchField.getText().trim();
-        try {
-            List<User> students;
-            if (keyword.isEmpty()) {
-                students = userService.getAllStudents();
-            } else {
-                // 根据姓名或学号搜索
-                students = userService.getAllStudents().stream()
-                    .filter(student -> student.getName().contains(keyword) || 
-                                     (student.getStudentId() != null && student.getStudentId().contains(keyword)))
-                    .collect(java.util.stream.Collectors.toList());
-            }
-            studentTable.setItems(FXCollections.observableArrayList(students));
-        } catch (Exception e) {
-            showErrorAlert("搜索失败", "搜索学生失败：" + e.getMessage());
-        }
+        currentStudentSearchKeyword = keyword;
+        loadStudentsWithCurrentSearch();
     }
     
     @FXML
@@ -409,28 +629,62 @@ public class TeacherMainController extends BaseController implements Initializab
     @FXML
     private void handleOrderSearch() {
         String keyword = orderSearchField.getText().trim();
+        currentOrderSearchKeyword = keyword;
+        // 如果进行搜索，清空筛选器状态
+        if (!keyword.isEmpty()) {
+            teacherOrderStatusFilter.setValue("全部订单");
+        }
+        loadOrdersWithCurrentSearch();
+    }
+    
+    private void loadOrdersWithCurrentSearch() {
+        currentOrderPage = 1;
+        loadOrdersWithSearchPagination();
+    }
+    
+    /**
+     * 分页加载搜索结果的订单数据
+     */
+    private void loadOrdersWithSearchPagination() {
         try {
-            List<Order> orders;
-            if (keyword.isEmpty()) {
-                orders = orderService.getAllOrders();
+            List<Order> allOrders;
+            if (currentOrderSearchKeyword.isEmpty()) {
+                allOrders = orderService.getAllOrders();
             } else {
                 // 先尝试按订单号搜索
-                Order orderByNumber = orderService.getOrderByOrderNumber(keyword);
+                Order orderByNumber = orderService.getOrderByOrderNumber(currentOrderSearchKeyword);
                 if (orderByNumber != null) {
-                    orders = Arrays.asList(orderByNumber);
+                    allOrders = Arrays.asList(orderByNumber);
                 } else {
                     // 按学生姓名搜索
-                    orders = new ArrayList<>();
-                    List<Order> allOrders = orderService.getAllOrders();
-                    for (Order order : allOrders) {
+                    allOrders = new ArrayList<>();
+                    List<Order> orders = orderService.getAllOrders();
+                    for (Order order : orders) {
                         User student = userService.getUserById(order.getStudentId());
-                        if (student != null && student.getName().contains(keyword)) {
-                            orders.add(order);
+                        if (student != null && student.getName().contains(currentOrderSearchKeyword)) {
+                            allOrders.add(order);
                         }
                     }
                 }
             }
-            orderTable.setItems(FXCollections.observableArrayList(orders));
+            
+            // 计算总页数
+            totalOrderPages = (int) Math.ceil((double) allOrders.size() / ITEMS_PER_PAGE);
+            if (totalOrderPages == 0) totalOrderPages = 1;
+            
+            // 获取当前页的数据
+            int startIndex = (currentOrderPage - 1) * ITEMS_PER_PAGE;
+            int endIndex = Math.min(startIndex + ITEMS_PER_PAGE, allOrders.size());
+            
+            List<Order> pageOrders = allOrders.subList(startIndex, endIndex);
+            orderTable.setItems(FXCollections.observableArrayList(pageOrders));
+            
+            // 更新分页控件
+            if (orderPagination != null) {
+                orderPagination.setPageCount(totalOrderPages);
+                orderPagination.setCurrentPageIndex(currentOrderPage - 1);
+            }
+            
         } catch (Exception e) {
             showErrorAlert("搜索失败", "搜索订单失败：" + e.getMessage());
         }
@@ -440,16 +694,27 @@ public class TeacherMainController extends BaseController implements Initializab
      * 根据当前筛选条件刷新订单数据
      */
     private void refreshOrdersWithCurrentFilter() {
+        // 如果进行筛选，清空搜索关键词
+        currentOrderSearchKeyword = "";
+        orderSearchField.setText("");
+        currentOrderPage = 1;
+        loadOrdersWithFilterPagination();
+    }
+    
+    /**
+     * 分页加载筛选结果的订单数据
+     */
+    private void loadOrdersWithFilterPagination() {
         try {
             String selectedStatus = teacherOrderStatusFilter.getValue();
             if (selectedStatus == null) {
                 selectedStatus = "全部订单";
             }
             
-            List<Order> filteredOrders;
+            List<Order> allOrders;
             
             if ("全部订单".equals(selectedStatus)) {
-                filteredOrders = orderService.getAllOrders();
+                allOrders = orderService.getAllOrders();
             } else {
                 // 将字符串转换为OrderStatus枚举
                 Order.OrderStatus status;
@@ -476,10 +741,25 @@ public class TeacherMainController extends BaseController implements Initializab
                         status = Order.OrderStatus.PENDING;
                         break;
                 }
-                filteredOrders = orderService.getOrdersByStatus(status);
+                allOrders = orderService.getOrdersByStatus(status);
             }
             
-            orderTable.setItems(FXCollections.observableArrayList(filteredOrders));
+            // 计算总页数
+            totalOrderPages = (int) Math.ceil((double) allOrders.size() / ITEMS_PER_PAGE);
+            if (totalOrderPages == 0) totalOrderPages = 1;
+            
+            // 获取当前页的数据
+            int startIndex = (currentOrderPage - 1) * ITEMS_PER_PAGE;
+            int endIndex = Math.min(startIndex + ITEMS_PER_PAGE, allOrders.size());
+            
+            List<Order> pageOrders = allOrders.subList(startIndex, endIndex);
+            orderTable.setItems(FXCollections.observableArrayList(pageOrders));
+            
+            // 更新分页控件
+            if (orderPagination != null) {
+                orderPagination.setPageCount(totalOrderPages);
+                orderPagination.setCurrentPageIndex(currentOrderPage - 1);
+            }
             
         } catch (Exception e) {
             showErrorAlert("错误", "筛选订单失败: " + e.getMessage());
@@ -737,11 +1017,15 @@ public class TeacherMainController extends BaseController implements Initializab
                 // 在JavaFX应用线程中执行刷新操作
                 Platform.runLater(() -> {
                     try {
-                        // 刷新图书和学生数据
-                        loadBooks();
-                        loadStudents();
-                        // 对于订单数据，保持当前筛选状态
-                        refreshOrdersWithCurrentFilter();
+                        // 刷新图书和学生数据，保持当前搜索状态和分页
+                        loadBooksWithPagination();
+                        loadStudentsWithPagination();
+                        // 对于订单，如果有搜索关键词则使用搜索刷新，否则使用筛选刷新
+                        if (!currentOrderSearchKeyword.isEmpty()) {
+                            loadOrdersWithSearchPagination();
+                        } else {
+                            loadOrdersWithFilterPagination();
+                        }
                     } catch (Exception e) {
                         // 静默处理异常，避免干扰用户操作
                         System.err.println("自动刷新失败: " + e.getMessage());
