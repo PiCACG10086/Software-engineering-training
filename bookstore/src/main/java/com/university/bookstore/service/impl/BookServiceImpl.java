@@ -4,9 +4,13 @@ import com.university.bookstore.dao.BookDAO;
 import com.university.bookstore.dao.impl.BookDAOImpl;
 import com.university.bookstore.model.Book;
 import com.university.bookstore.service.BookService;
+import com.university.bookstore.util.CacheManager;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 图书业务逻辑服务实现类
@@ -42,12 +46,80 @@ public class BookServiceImpl implements BookService {
     
     @Override
     public List<Book> getBooksWithPagination(int page, int pageSize) {
-        if (page < 1 || pageSize < 1) {
-            throw new IllegalArgumentException("页码和页面大小必须大于0");
+        if (page <= 0 || pageSize <= 0) {
+            return new ArrayList<>();
+        }
+        
+        // 使用缓存提高性能
+        String cacheKey = CacheManager.generateKey("books_page", page, pageSize);
+        List<Book> cachedBooks = CacheManager.get(cacheKey);
+        if (cachedBooks != null) {
+            return cachedBooks;
         }
         
         int offset = (page - 1) * pageSize;
-        return bookDAO.findWithPagination(offset, pageSize);
+        List<Book> books = bookDAO.findWithPagination(offset, pageSize);
+        
+        // 缓存结果
+        CacheManager.put(cacheKey, books, 60000); // 缓存1分钟
+        
+        return books;
+    }
+    
+    /**
+     * 根据搜索条件分页获取教材
+     */
+    public List<Book> searchBooksWithPagination(String keyword, int page, int pageSize) {
+        if (page <= 0 || pageSize <= 0) {
+            return new ArrayList<>();
+        }
+        
+        // 使用缓存提高性能
+        String cacheKey = CacheManager.generateKey("books_search", keyword, page, pageSize);
+        List<Book> cachedBooks = CacheManager.get(cacheKey);
+        if (cachedBooks != null) {
+            return cachedBooks;
+        }
+        
+        int offset = (page - 1) * pageSize;
+        List<Book> books = bookDAO.findByTitleWithPagination(keyword, offset, pageSize);
+        
+        // 缓存结果
+        CacheManager.put(cacheKey, books, 60000); // 缓存1分钟
+        
+        return books;
+    }
+    
+    /**
+     * 获取教材总数（带缓存）
+     */
+    public int getTotalBooksCount() {
+        String cacheKey = "books_total_count";
+        Integer cachedCount = CacheManager.get(cacheKey);
+        if (cachedCount != null) {
+            return cachedCount;
+        }
+        
+        int count = bookDAO.getTotalCount();
+        CacheManager.put(cacheKey, count, 120000); // 缓存2分钟
+        
+        return count;
+    }
+    
+    /**
+     * 根据搜索条件获取教材总数（带缓存）
+     */
+    public int getTotalBooksCountByTitle(String keyword) {
+        String cacheKey = CacheManager.generateKey("books_search_count", keyword);
+        Integer cachedCount = CacheManager.get(cacheKey);
+        if (cachedCount != null) {
+            return cachedCount;
+        }
+        
+        int count = bookDAO.getTotalCountByTitle(keyword);
+        CacheManager.put(cacheKey, count, 120000); // 缓存2分钟
+        
+        return count;
     }
     
     @Override

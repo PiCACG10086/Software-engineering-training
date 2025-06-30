@@ -34,12 +34,25 @@ public class DBUtil {
             config.setPassword(DB_PASSWORD);
             config.setDriverClassName(DB_DRIVER);
             
-            // 连接池配置
-            config.setMaximumPoolSize(20); // 最大连接数
-            config.setMinimumIdle(5);      // 最小空闲连接数
-            config.setConnectionTimeout(30000); // 连接超时时间(毫秒)
-            config.setIdleTimeout(600000);       // 空闲超时时间(毫秒)
-            config.setMaxLifetime(1800000);      // 连接最大生存时间(毫秒)
+            // 连接池配置优化
+            config.setMaximumPoolSize(50); // 增加最大连接数
+            config.setMinimumIdle(10);     // 增加最小空闲连接数
+            config.setConnectionTimeout(20000); // 减少连接超时时间
+            config.setIdleTimeout(300000);      // 减少空闲超时时间(5分钟)
+            config.setMaxLifetime(1200000);     // 减少连接最大生存时间(20分钟)
+            config.setLeakDetectionThreshold(60000); // 连接泄漏检测(1分钟)
+            
+            // 性能优化配置
+            config.addDataSourceProperty("cachePrepStmts", "true");
+            config.addDataSourceProperty("prepStmtCacheSize", "250");
+            config.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
+            config.addDataSourceProperty("useServerPrepStmts", "true");
+            config.addDataSourceProperty("useLocalSessionState", "true");
+            config.addDataSourceProperty("rewriteBatchedStatements", "true");
+            config.addDataSourceProperty("cacheResultSetMetadata", "true");
+            config.addDataSourceProperty("cacheServerConfiguration", "true");
+            config.addDataSourceProperty("elideSetAutoCommits", "true");
+            config.addDataSourceProperty("maintainTimeStats", "false");
             
             // 连接测试
             config.setConnectionTestQuery("SELECT 1");

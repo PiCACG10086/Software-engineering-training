@@ -3,6 +3,7 @@ package com.university.bookstore.ui;
 import com.university.bookstore.model.*;
 import com.university.bookstore.service.*;
 import com.university.bookstore.service.impl.*;
+import com.university.bookstore.util.PerformanceMonitor;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -403,65 +404,75 @@ public class AdminMainController extends BaseController implements Initializable
     }
     
     /**
-     * 分页加载图书数据
+     * 分页加载图书数据（优化版本）
      */
     private void loadBooksWithPagination() {
-        try {
-            List<Book> allBooks;
-            if (currentBookSearchKeyword.isEmpty()) {
-                allBooks = bookService.getAllBooks();
-            } else {
-                allBooks = bookService.searchBooks(currentBookSearchKeyword);
+        PerformanceMonitor.monitor("loadBooksWithPagination", () -> {
+            try {
+                List<Book> pageBooks;
+                int totalCount;
+                
+                if (currentBookSearchKeyword.isEmpty()) {
+                    // 使用优化的分页查询
+                    pageBooks = bookService.getBooksWithPagination(currentBookPage, ITEMS_PER_PAGE);
+                    totalCount = ((BookServiceImpl) bookService).getTotalBooksCount();
+                } else {
+                    // 使用优化的搜索分页查询
+                    pageBooks = ((BookServiceImpl) bookService).searchBooksWithPagination(
+                        currentBookSearchKeyword, currentBookPage, ITEMS_PER_PAGE);
+                    totalCount = ((BookServiceImpl) bookService).getTotalBooksCountByTitle(currentBookSearchKeyword);
+                }
+                
+                // 计算总页数
+                totalBookPages = (int) Math.ceil((double) totalCount / ITEMS_PER_PAGE);
+                if (totalBookPages == 0) totalBookPages = 1;
+                
+                bookTable.setItems(FXCollections.observableArrayList(pageBooks));
+                
+                // 更新分页控件
+                if (bookPagination != null) {
+                    bookPagination.setPageCount(totalBookPages);
+                    bookPagination.setCurrentPageIndex(currentBookPage - 1);
+                }
+                
+            } catch (Exception e) {
+                showErrorAlert("加载失败", "加载图书数据失败：" + e.getMessage());
             }
-            
-            // 计算总页数
-            totalBookPages = (int) Math.ceil((double) allBooks.size() / ITEMS_PER_PAGE);
-            if (totalBookPages == 0) totalBookPages = 1;
-            
-            // 获取当前页的数据
-            int startIndex = (currentBookPage - 1) * ITEMS_PER_PAGE;
-            int endIndex = Math.min(startIndex + ITEMS_PER_PAGE, allBooks.size());
-            
-            List<Book> pageBooks = allBooks.subList(startIndex, endIndex);
-            bookTable.setItems(FXCollections.observableArrayList(pageBooks));
-            
-            // 更新分页控件
-            if (bookPagination != null) {
-                bookPagination.setPageCount(totalBookPages);
-                bookPagination.setCurrentPageIndex(currentBookPage - 1);
-            }
-            
-        } catch (Exception e) {
-            showErrorAlert("加载失败", "加载图书数据失败：" + e.getMessage());
-        }
+            return null;
+        });
     }
     
     /**
-     * 仅加载图书数据，不更新分页控件（避免循环调用）
+     * 仅加载图书数据，不更新分页控件（避免循环调用）- 优化版本
      */
     private void loadBooksWithPaginationOnly() {
-        try {
-            List<Book> allBooks;
-            if (currentBookSearchKeyword.isEmpty()) {
-                allBooks = bookService.getAllBooks();
-            } else {
-                allBooks = bookService.searchBooks(currentBookSearchKeyword);
+        PerformanceMonitor.monitor("loadBooksWithPaginationOnly", () -> {
+            try {
+                List<Book> pageBooks;
+                int totalCount;
+                
+                if (currentBookSearchKeyword.isEmpty()) {
+                    // 使用优化的分页查询
+                    pageBooks = bookService.getBooksWithPagination(currentBookPage, ITEMS_PER_PAGE);
+                    totalCount = ((BookServiceImpl) bookService).getTotalBooksCount();
+                } else {
+                    // 使用优化的搜索分页查询
+                    pageBooks = ((BookServiceImpl) bookService).searchBooksWithPagination(
+                        currentBookSearchKeyword, currentBookPage, ITEMS_PER_PAGE);
+                    totalCount = ((BookServiceImpl) bookService).getTotalBooksCountByTitle(currentBookSearchKeyword);
+                }
+                
+                // 计算总页数
+                totalBookPages = (int) Math.ceil((double) totalCount / ITEMS_PER_PAGE);
+                if (totalBookPages == 0) totalBookPages = 1;
+                
+                bookTable.setItems(FXCollections.observableArrayList(pageBooks));
+                
+            } catch (Exception e) {
+                showErrorAlert("加载失败", "加载图书数据失败：" + e.getMessage());
             }
-            
-            // 计算总页数
-            totalBookPages = (int) Math.ceil((double) allBooks.size() / ITEMS_PER_PAGE);
-            if (totalBookPages == 0) totalBookPages = 1;
-            
-            // 获取当前页的数据
-            int startIndex = (currentBookPage - 1) * ITEMS_PER_PAGE;
-            int endIndex = Math.min(startIndex + ITEMS_PER_PAGE, allBooks.size());
-            
-            List<Book> pageBooks = allBooks.subList(startIndex, endIndex);
-            bookTable.setItems(FXCollections.observableArrayList(pageBooks));
-            
-        } catch (Exception e) {
-            showErrorAlert("加载失败", "加载图书数据失败：" + e.getMessage());
-        }
+            return null;
+        });
     }
     
     /**
@@ -479,63 +490,66 @@ public class AdminMainController extends BaseController implements Initializable
      * 分页加载订单数据
      */
     private void loadOrdersWithPagination() {
-        try {
-            List<Order> allOrders;
-            if (!currentOrderSearchKeyword.isEmpty()) {
-                // 根据订单号搜索
-                Order order = orderService.getOrderByOrderNumber(currentOrderSearchKeyword);
-                allOrders = order != null ? Arrays.asList(order) : new ArrayList<>();
-            } else if ("全部订单".equals(currentOrderFilter)) {
-                allOrders = orderService.getAllOrders();
-            } else {
-                // 将字符串转换为OrderStatus枚举
-                Order.OrderStatus status;
-                switch (currentOrderFilter) {
-                    case "待支付":
-                        status = Order.OrderStatus.PENDING;
-                        break;
-                    case "已支付":
-                        status = Order.OrderStatus.PAID;
-                        break;
-                    case "已确认":
-                        status = Order.OrderStatus.CONFIRMED;
-                        break;
-                    case "已发货":
-                        status = Order.OrderStatus.SHIPPED;
-                        break;
-                    case "已完成":
-                        status = Order.OrderStatus.COMPLETED;
-                        break;
-                    case "已取消":
-                        status = Order.OrderStatus.CANCELLED;
-                        break;
-                    default:
-                        status = Order.OrderStatus.PENDING;
-                        break;
+        PerformanceMonitor.monitor("loadOrdersWithPagination", () -> {
+            try {
+                List<Order> allOrders;
+                if (!currentOrderSearchKeyword.isEmpty()) {
+                    // 根据订单号搜索
+                    Order order = orderService.getOrderByOrderNumber(currentOrderSearchKeyword);
+                    allOrders = order != null ? Arrays.asList(order) : new ArrayList<>();
+                } else if ("全部订单".equals(currentOrderFilter)) {
+                    allOrders = orderService.getAllOrders();
+                } else {
+                    // 将字符串转换为OrderStatus枚举
+                    Order.OrderStatus status;
+                    switch (currentOrderFilter) {
+                        case "待支付":
+                            status = Order.OrderStatus.PENDING;
+                            break;
+                        case "已支付":
+                            status = Order.OrderStatus.PAID;
+                            break;
+                        case "已确认":
+                            status = Order.OrderStatus.CONFIRMED;
+                            break;
+                        case "已发货":
+                            status = Order.OrderStatus.SHIPPED;
+                            break;
+                        case "已完成":
+                            status = Order.OrderStatus.COMPLETED;
+                            break;
+                        case "已取消":
+                            status = Order.OrderStatus.CANCELLED;
+                            break;
+                        default:
+                            status = Order.OrderStatus.PENDING;
+                            break;
+                    }
+                    allOrders = orderService.getOrdersByStatus(status);
                 }
-                allOrders = orderService.getOrdersByStatus(status);
+                
+                // 计算总页数
+                totalOrderPages = (int) Math.ceil((double) allOrders.size() / ITEMS_PER_PAGE);
+                if (totalOrderPages == 0) totalOrderPages = 1;
+                
+                // 获取当前页的数据
+                int startIndex = (currentOrderPage - 1) * ITEMS_PER_PAGE;
+                int endIndex = Math.min(startIndex + ITEMS_PER_PAGE, allOrders.size());
+                
+                List<Order> pageOrders = allOrders.subList(startIndex, endIndex);
+                orderTable.setItems(FXCollections.observableArrayList(pageOrders));
+                
+                // 更新分页控件
+                if (orderPagination != null) {
+                    orderPagination.setPageCount(totalOrderPages);
+                    orderPagination.setCurrentPageIndex(currentOrderPage - 1);
+                }
+                
+            } catch (Exception e) {
+                showErrorAlert("加载失败", "加载订单数据失败：" + e.getMessage());
             }
-            
-            // 计算总页数
-            totalOrderPages = (int) Math.ceil((double) allOrders.size() / ITEMS_PER_PAGE);
-            if (totalOrderPages == 0) totalOrderPages = 1;
-            
-            // 获取当前页的数据
-            int startIndex = (currentOrderPage - 1) * ITEMS_PER_PAGE;
-            int endIndex = Math.min(startIndex + ITEMS_PER_PAGE, allOrders.size());
-            
-            List<Order> pageOrders = allOrders.subList(startIndex, endIndex);
-            orderTable.setItems(FXCollections.observableArrayList(pageOrders));
-            
-            // 更新分页控件
-            if (orderPagination != null) {
-                orderPagination.setPageCount(totalOrderPages);
-                orderPagination.setCurrentPageIndex(currentOrderPage - 1);
-            }
-            
-        } catch (Exception e) {
-            showErrorAlert("加载失败", "加载订单数据失败：" + e.getMessage());
-        }
+            return null;
+        });
     }
     
     /**
@@ -608,36 +622,39 @@ public class AdminMainController extends BaseController implements Initializable
      * 分页加载用户数据
      */
     private void loadUsersWithPagination() {
-        try {
-            List<User> allUsers;
-            if (currentUserSearchKeyword.isEmpty()) {
-                allUsers = userService.getAllUsers();
-            } else {
-                // 根据用户名搜索
-                User user = userService.getUserByUsername(currentUserSearchKeyword);
-                allUsers = user != null ? Arrays.asList(user) : new ArrayList<>();
+        PerformanceMonitor.monitor("loadUsersWithPagination", () -> {
+            try {
+                List<User> allUsers;
+                if (currentUserSearchKeyword.isEmpty()) {
+                    allUsers = userService.getAllUsers();
+                } else {
+                    // 根据用户名搜索
+                    User user = userService.getUserByUsername(currentUserSearchKeyword);
+                    allUsers = user != null ? Arrays.asList(user) : new ArrayList<>();
+                }
+                
+                // 计算总页数
+                totalUserPages = (int) Math.ceil((double) allUsers.size() / ITEMS_PER_PAGE);
+                if (totalUserPages == 0) totalUserPages = 1;
+                
+                // 获取当前页的数据
+                int startIndex = (currentUserPage - 1) * ITEMS_PER_PAGE;
+                int endIndex = Math.min(startIndex + ITEMS_PER_PAGE, allUsers.size());
+                
+                List<User> pageUsers = allUsers.subList(startIndex, endIndex);
+                userTable.setItems(FXCollections.observableArrayList(pageUsers));
+                
+                // 更新分页控件
+                if (userPagination != null) {
+                    userPagination.setPageCount(totalUserPages);
+                    userPagination.setCurrentPageIndex(currentUserPage - 1);
+                }
+                
+            } catch (Exception e) {
+                showErrorAlert("加载失败", "加载用户数据失败：" + e.getMessage());
             }
-            
-            // 计算总页数
-            totalUserPages = (int) Math.ceil((double) allUsers.size() / ITEMS_PER_PAGE);
-            if (totalUserPages == 0) totalUserPages = 1;
-            
-            // 获取当前页的数据
-            int startIndex = (currentUserPage - 1) * ITEMS_PER_PAGE;
-            int endIndex = Math.min(startIndex + ITEMS_PER_PAGE, allUsers.size());
-            
-            List<User> pageUsers = allUsers.subList(startIndex, endIndex);
-            userTable.setItems(FXCollections.observableArrayList(pageUsers));
-            
-            // 更新分页控件
-            if (userPagination != null) {
-                userPagination.setPageCount(totalUserPages);
-                userPagination.setCurrentPageIndex(currentUserPage - 1);
-            }
-            
-        } catch (Exception e) {
-            showErrorAlert("加载失败", "加载用户数据失败：" + e.getMessage());
-        }
+            return null;
+        });
     }
     
     /**
@@ -1440,8 +1457,18 @@ public class AdminMainController extends BaseController implements Initializable
         return true;
     }
     
+    // 记录上次刷新时间
+    private long lastBookRefreshTime = 0;
+    private long lastOrderRefreshTime = 0;
+    private long lastUserRefreshTime = 0;
+    
+    // 不同数据的刷新间隔
+    private static final int BOOK_REFRESH_INTERVAL = 30000; // 30秒
+    private static final int ORDER_REFRESH_INTERVAL = 10000; // 10秒
+    private static final int USER_REFRESH_INTERVAL = 20000;  // 20秒
+    
     /**
-     * 启动自动刷新功能
+     * 启动自动刷新功能（优化版本）
      */
     private void startAutoRefresh() {
         if (autoRefreshTimer != null) {
@@ -1455,17 +1482,33 @@ public class AdminMainController extends BaseController implements Initializable
                 // 在JavaFX应用线程中执行刷新操作
                 Platform.runLater(() -> {
                     try {
-                        // 刷新图书、订单和用户数据，保持当前页和搜索/筛选条件
-                        loadBooksWithPagination();
-                        loadOrdersWithPagination();
-                        loadUsersWithPagination();
+                        long currentTime = System.currentTimeMillis();
+                        
+                        // 智能刷新：只在需要时刷新数据
+                        // 订单数据优先级最高，刷新最频繁
+                        if (currentTime - lastOrderRefreshTime >= ORDER_REFRESH_INTERVAL) {
+                            loadOrdersWithPagination();
+                            lastOrderRefreshTime = currentTime;
+                        }
+                        
+                        // 用户数据次之
+                        if (currentTime - lastUserRefreshTime >= USER_REFRESH_INTERVAL) {
+                            loadUsersWithPagination();
+                            lastUserRefreshTime = currentTime;
+                        }
+                        
+                        // 图书数据变化较少，刷新频率最低
+                        if (currentTime - lastBookRefreshTime >= BOOK_REFRESH_INTERVAL) {
+                            loadBooksWithPagination();
+                            lastBookRefreshTime = currentTime;
+                        }
                     } catch (Exception e) {
                         // 静默处理异常，避免干扰用户操作
                         System.err.println("自动刷新失败: " + e.getMessage());
                     }
                 });
             }
-        }, AUTO_REFRESH_INTERVAL, AUTO_REFRESH_INTERVAL);
+        }, 5000, 5000); // 检查间隔为5秒
     }
     
     /**

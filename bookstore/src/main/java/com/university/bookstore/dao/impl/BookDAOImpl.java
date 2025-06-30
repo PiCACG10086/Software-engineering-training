@@ -241,12 +241,12 @@ public class BookDAOImpl implements BookDAO {
     }
 
     /**
-     * 分页查询教材
+     * 分页查询教材（优化版本）
      */
     @Override
     public List<Book> findWithPagination(int offset, int limit) {
         List<Book> books = new ArrayList<>();
-        String sql = "SELECT * FROM t_book ORDER BY title LIMIT ? OFFSET ?";
+        String sql = "SELECT * FROM t_book ORDER BY id LIMIT ? OFFSET ?";
         
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -264,6 +264,54 @@ public class BookDAOImpl implements BookDAO {
             e.printStackTrace();
         }
         return books;
+    }
+    
+    /**
+     * 根据搜索条件分页查询教材
+     */
+    public List<Book> findByTitleWithPagination(String title, int offset, int limit) {
+        List<Book> books = new ArrayList<>();
+        String sql = "SELECT * FROM t_book WHERE title LIKE ? ORDER BY id LIMIT ? OFFSET ?";
+        
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setString(1, "%" + title + "%");
+            stmt.setInt(2, limit);
+            stmt.setInt(3, offset);
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    books.add(mapResultSetToBook(rs));
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("根据标题分页查询教材失败: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return books;
+    }
+    
+    /**
+     * 根据搜索条件获取教材总数
+     */
+    public int getTotalCountByTitle(String title) {
+        String sql = "SELECT COUNT(*) FROM t_book WHERE title LIKE ?";
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setString(1, "%" + title + "%");
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("根据标题获取教材总数失败: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return 0;
     }
 
     /**

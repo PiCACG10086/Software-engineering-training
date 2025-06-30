@@ -2,6 +2,7 @@ package com.university.bookstore;
 
 import com.university.bookstore.ui.LoginController;
 import com.university.bookstore.util.DBUtil;
+import com.university.bookstore.config.PerformanceConfig;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
@@ -32,9 +33,19 @@ public class BookstoreApplication extends Application {
             primaryStage.centerOnScreen();
             primaryStage.show();
             
+            // 在界面显示后初始化性能配置（异步执行）
+            new Thread(() -> {
+                PerformanceConfig.initialize();
+            }).start();
+            
             // 设置关闭事件
             primaryStage.setOnCloseRequest(event -> {
-                DBUtil.closeDataSource();
+                // 打印性能建议
+                PerformanceConfig.printPerformanceRecommendations();
+                
+                // 关闭性能配置
+                PerformanceConfig.shutdown();
+                
                 System.exit(0);
             });
             

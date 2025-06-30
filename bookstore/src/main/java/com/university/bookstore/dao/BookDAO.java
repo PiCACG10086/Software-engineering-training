@@ -80,10 +80,26 @@ public interface BookDAO {
     List<Book> findWithPagination(int offset, int limit);
     
     /**
+     * 根据搜索条件分页查询教材
+     * @param title 书名关键词
+     * @param offset 偏移量
+     * @param limit 限制数量
+     * @return 教材列表
+     */
+    List<Book> findByTitleWithPagination(String title, int offset, int limit);
+    
+    /**
      * 获取教材总数
      * @return 教材总数
      */
     int getTotalCount();
+    
+    /**
+     * 根据搜索条件获取教材总数
+     * @param title 书名关键词
+     * @return 教材总数
+     */
+    int getTotalCountByTitle(String title);
     
     /**
      * 插入新教材

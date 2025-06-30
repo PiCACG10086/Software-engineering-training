@@ -6,6 +6,7 @@ E:\Curriculum\Curriculum Provision\Software engineering training\bookstore\src\m
 E:\Curriculum\Curriculum Provision\Software engineering training\bookstore\src\main\java\com\university\bookstore\test\PaymentTest.java
 E:\Curriculum\Curriculum Provision\Software engineering training\bookstore\src\main\java\com\university\bookstore\ui\BaseController.java
 E:\Curriculum\Curriculum Provision\Software engineering training\bookstore\src\main\java\com\university\bookstore\ui\TeacherMainController.java
+E:\Curriculum\Curriculum Provision\Software engineering training\bookstore\src\main\java\com\university\bookstore\config\PerformanceConfig.java
 E:\Curriculum\Curriculum Provision\Software engineering training\bookstore\src\main\java\com\university\bookstore\BookstoreApplication.java
 E:\Curriculum\Curriculum Provision\Software engineering training\bookstore\src\main\java\com\university\bookstore\ui\AdminMainController.java
 E:\Curriculum\Curriculum Provision\Software engineering training\bookstore\src\main\java\com\university\bookstore\model\Book.java
@@ -18,6 +19,8 @@ E:\Curriculum\Curriculum Provision\Software engineering training\bookstore\src\m
 E:\Curriculum\Curriculum Provision\Software engineering training\bookstore\src\main\java\com\university\bookstore\dao\impl\BookDAOImpl.java
 E:\Curriculum\Curriculum Provision\Software engineering training\bookstore\src\main\java\com\university\bookstore\model\Order.java
 E:\Curriculum\Curriculum Provision\Software engineering training\bookstore\src\main\java\com\university\bookstore\ui\LoginController.java
+E:\Curriculum\Curriculum Provision\Software engineering training\bookstore\src\main\java\com\university\bookstore\util\CacheManager.java
+E:\Curriculum\Curriculum Provision\Software engineering training\bookstore\src\main\java\com\university\bookstore\util\PerformanceMonitor.java
 E:\Curriculum\Curriculum Provision\Software engineering training\bookstore\src\main\java\com\university\bookstore\service\BookService.java
 E:\Curriculum\Curriculum Provision\Software engineering training\bookstore\src\main\java\com\university\bookstore\dao\OrderDAO.java
 E:\Curriculum\Curriculum Provision\Software engineering training\bookstore\src\main\java\com\university\bookstore\dao\impl\UserDAOImpl.java
