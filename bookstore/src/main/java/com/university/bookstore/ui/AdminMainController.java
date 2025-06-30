@@ -159,7 +159,7 @@ public class AdminMainController extends BaseController implements Initializable
     private Book currentEditingBook;
     
     // 分页相关字段
-    private static final int ITEMS_PER_PAGE = 10; // 每页显示的项目数
+    private static final int ITEMS_PER_PAGE = 20; // 每页显示的项目数
     private int currentBookPage = 1; // 当前图书页码
     private int totalBookPages = 1; // 图书总页数
     private int currentOrderPage = 1; // 当前订单页码

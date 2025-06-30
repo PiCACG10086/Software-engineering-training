@@ -51,13 +51,13 @@
                      <center>
                         <SplitPane dividerPositions="0.6" orientation="HORIZONTAL">
                            <items>
-                              <VBox>
+                              <VBox spacing="5.0" VBox.vgrow="ALWAYS">
                                  <Label text="图书列表">
                                     <font>
                                        <Font name="System Bold" size="14.0" />
                                     </font>
                                  </Label>
-                                 <TableView fx:id="bookTable" VBox.vgrow="ALWAYS">
+                                 <TableView fx:id="bookTable" VBox.vgrow="ALWAYS" minHeight="400.0" prefHeight="500.0">
                                     <columns>
                                        <TableColumn fx:id="bookTitleColumn" prefWidth="150.0" text="书名" />
                                        <TableColumn fx:id="bookAuthorColumn" prefWidth="100.0" text="作者" />
@@ -66,9 +66,9 @@
                                        <TableColumn fx:id="bookStockColumn" prefWidth="60.0" text="库存" />
                                     </columns>
                                  </TableView>
-                                 <Pagination fx:id="bookPagination" pageCount="1" currentPageIndex="0">
+                                 <Pagination fx:id="bookPagination" pageCount="1" currentPageIndex="0" VBox.vgrow="NEVER">
                                     <VBox.margin>
-                                       <Insets top="10.0" />
+                                       <Insets top="5.0" />
                                     </VBox.margin>
                                  </Pagination>
                               </VBox>
@@ -149,13 +149,13 @@
                         </VBox>
                      </top>
                      <center>
-                        <VBox spacing="10.0">
+                        <VBox spacing="5.0" VBox.vgrow="ALWAYS">
                            <Label text="订单列表">
                               <font>
                                  <Font name="System Bold" size="14.0" />
                               </font>
                            </Label>
-                           <TableView fx:id="orderTable" VBox.vgrow="ALWAYS">
+                           <TableView fx:id="orderTable" VBox.vgrow="ALWAYS" minHeight="400.0" prefHeight="500.0">
                               <columns>
                                  <TableColumn fx:id="orderNumberColumn" prefWidth="120.0" text="订单号" />
                                  <TableColumn fx:id="orderStudentColumn" prefWidth="100.0" text="学生" />
@@ -164,9 +164,9 @@
                                  <TableColumn fx:id="orderDateColumn" prefWidth="150.0" text="下单时间" />
                               </columns>
                            </TableView>
-                           <Pagination fx:id="orderPagination" pageCount="1" currentPageIndex="0">
+                           <Pagination fx:id="orderPagination" pageCount="1" currentPageIndex="0" VBox.vgrow="NEVER">
                               <VBox.margin>
-                                 <Insets top="10.0" />
+                                 <Insets top="5.0" />
                               </VBox.margin>
                            </Pagination>
                            <padding>
@@ -200,13 +200,13 @@
                         </VBox>
                      </top>
                      <center>
-                        <VBox spacing="10.0">
+                        <VBox spacing="5.0" VBox.vgrow="ALWAYS">
                            <Label text="用户列表">
                               <font>
                                  <Font name="System Bold" size="14.0" />
                               </font>
                            </Label>
-                           <TableView fx:id="userTable" VBox.vgrow="ALWAYS">
+                           <TableView fx:id="userTable" VBox.vgrow="ALWAYS" minHeight="400.0" prefHeight="500.0">
                               <columns>
                                  <TableColumn fx:id="userUsernameColumn" prefWidth="120.0" text="用户名" />
                                  <TableColumn fx:id="userNameColumn" prefWidth="100.0" text="姓名" />
@@ -215,9 +215,9 @@
                                  <TableColumn fx:id="userCreateTimeColumn" prefWidth="120.0" text="创建时间" />
                               </columns>
                            </TableView>
-                           <Pagination fx:id="userPagination" pageCount="1" currentPageIndex="0">
+                           <Pagination fx:id="userPagination" pageCount="1" currentPageIndex="0" VBox.vgrow="NEVER">
                               <VBox.margin>
-                                 <Insets top="10.0" />
+                                 <Insets top="5.0" />
                               </VBox.margin>
                            </Pagination>
                            <padding>
