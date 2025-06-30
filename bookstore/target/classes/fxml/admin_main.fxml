@@ -66,6 +66,11 @@
                                        <TableColumn fx:id="bookStockColumn" prefWidth="60.0" text="库存" />
                                     </columns>
                                  </TableView>
+                                 <Pagination fx:id="bookPagination" pageCount="1" currentPageIndex="0">
+                                    <VBox.margin>
+                                       <Insets top="10.0" />
+                                    </VBox.margin>
+                                 </Pagination>
                               </VBox>
                               <VBox spacing="10.0">
                                  <Label text="图书信息">
@@ -159,6 +164,11 @@
                                  <TableColumn fx:id="orderDateColumn" prefWidth="150.0" text="下单时间" />
                               </columns>
                            </TableView>
+                           <Pagination fx:id="orderPagination" pageCount="1" currentPageIndex="0">
+                              <VBox.margin>
+                                 <Insets top="10.0" />
+                              </VBox.margin>
+                           </Pagination>
                            <padding>
                               <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                            </padding>
@@ -205,6 +215,11 @@
                                  <TableColumn fx:id="userCreateTimeColumn" prefWidth="120.0" text="创建时间" />
                               </columns>
                            </TableView>
+                           <Pagination fx:id="userPagination" pageCount="1" currentPageIndex="0">
+                              <VBox.margin>
+                                 <Insets top="10.0" />
+                              </VBox.margin>
+                           </Pagination>
                            <padding>
                               <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                            </padding>

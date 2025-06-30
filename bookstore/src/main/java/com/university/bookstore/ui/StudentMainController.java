@@ -11,6 +11,8 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.VBox;
+import javafx.scene.layout.HBox;
+import javafx.geometry.Insets;
 import javafx.fxml.FXMLLoader;
 import javafx.application.Platform;
 import javafx.scene.Scene;
@@ -125,6 +127,21 @@ public class StudentMainController extends BaseController implements Initializab
     private Timer autoRefreshTimer;
     private static final int AUTO_REFRESH_INTERVAL = 5000; // 5秒自动刷新
     
+    // 分页相关字段
+    private static final int ITEMS_PER_PAGE = 10; // 每页显示的项目数
+    private int currentBookPage = 1; // 当前图书页码
+    private int totalBookPages = 1; // 图书总页数
+    private int currentOrderPage = 1; // 当前订单页码
+    private int totalOrderPages = 1; // 订单总页数
+    private String currentSearchKeyword = ""; // 当前搜索关键词
+    private String currentOrderFilter = "全部订单"; // 当前订单筛选条件
+    
+    // 分页控件（需要在FXML中添加）
+    @FXML
+    private Pagination bookPagination;
+    @FXML
+    private Pagination orderPagination;
+    
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         // 初始化服务
@@ -145,6 +162,9 @@ public class StudentMainController extends BaseController implements Initializab
         
         // 加载数据
         loadBooks();
+        
+        // 初始化分页控件事件
+        initializePagination();
         
         // 启动自动刷新
         startAutoRefresh();
@@ -299,15 +319,35 @@ public class StudentMainController extends BaseController implements Initializab
     }
     
     /**
+     * 初始化分页控件
+     */
+    private void initializePagination() {
+        // 初始化图书分页控件
+        if (bookPagination != null) {
+            bookPagination.setPageFactory(pageIndex -> {
+                currentBookPage = pageIndex + 1;
+                loadBooksWithPagination();
+                return bookTable;
+            });
+        }
+        
+        // 初始化订单分页控件
+        if (orderPagination != null) {
+            orderPagination.setPageFactory(pageIndex -> {
+                currentOrderPage = pageIndex + 1;
+                loadOrdersWithPagination();
+                return orderTable;
+            });
+        }
+    }
+    
+    /**
      * 加载图书数据
      */
     private void loadBooks() {
-        try {
-            List<Book> books = bookService.getAllBooks();
-            bookTable.setItems(FXCollections.observableArrayList(books));
-        } catch (Exception e) {
-            showErrorAlert("加载失败", "加载图书数据失败：" + e.getMessage());
-        }
+        currentSearchKeyword = "";
+        currentBookPage = 1;
+        loadBooksWithPagination();
     }
     
     /**
@@ -318,7 +358,9 @@ public class StudentMainController extends BaseController implements Initializab
         
         // 重置筛选条件为全部订单
         orderStatusFilter.setValue("全部订单");
-        refreshOrdersWithCurrentFilter();
+        currentOrderFilter = "全部订单";
+        currentOrderPage = 1;
+        loadOrdersWithPagination();
     }
     
     /**
@@ -327,15 +369,43 @@ public class StudentMainController extends BaseController implements Initializab
     private void refreshOrdersWithCurrentFilter() {
         if (currentUser == null) return;
         
-        String selectedStatus = orderStatusFilter.getValue();
+        currentOrderFilter = orderStatusFilter.getValue();
+        if (currentOrderFilter == null) currentOrderFilter = "全部订单";
+        currentOrderPage = 1; // 重置到第一页
+        loadOrdersWithPagination();
+    }
+    
+    /**
+     * 分页加载订单数据
+     */
+    private void loadOrdersWithPagination() {
+        if (currentUser == null) return;
+        
         try {
-            List<Order> orders;
-            if ("全部订单".equals(selectedStatus)) {
-                orders = orderService.getOrdersByStudentId(currentUser.getId());
+            List<Order> allOrders;
+            if ("全部订单".equals(currentOrderFilter)) {
+                allOrders = orderService.getOrdersByStudentId(currentUser.getId());
             } else {
-                orders = orderService.getOrdersByStudentIdAndStatus(currentUser.getId(), selectedStatus);
+                allOrders = orderService.getOrdersByStudentIdAndStatus(currentUser.getId(), currentOrderFilter);
             }
-            orderTable.setItems(FXCollections.observableArrayList(orders));
+            
+            // 计算总页数
+            totalOrderPages = (int) Math.ceil((double) allOrders.size() / ITEMS_PER_PAGE);
+            if (totalOrderPages == 0) totalOrderPages = 1;
+            
+            // 获取当前页的数据
+            int startIndex = (currentOrderPage - 1) * ITEMS_PER_PAGE;
+            int endIndex = Math.min(startIndex + ITEMS_PER_PAGE, allOrders.size());
+            
+            List<Order> pageOrders = allOrders.subList(startIndex, endIndex);
+            orderTable.setItems(FXCollections.observableArrayList(pageOrders));
+            
+            // 更新分页控件
+            if (orderPagination != null) {
+                orderPagination.setPageCount(totalOrderPages);
+                orderPagination.setCurrentPageIndex(currentOrderPage - 1);
+            }
+            
         } catch (Exception e) {
             showErrorAlert("加载失败", "加载订单数据失败：" + e.getMessage());
         }
@@ -346,17 +416,42 @@ public class StudentMainController extends BaseController implements Initializab
      */
     @FXML
     private void handleSearch() {
-        String keyword = searchField.getText().trim();
+        currentSearchKeyword = searchField.getText().trim();
+        currentBookPage = 1; // 重置到第一页
+        loadBooksWithPagination();
+    }
+    
+    /**
+     * 分页加载图书数据
+     */
+    private void loadBooksWithPagination() {
         try {
-            List<Book> books;
-            if (keyword.isEmpty()) {
-                books = bookService.getAllBooks();
+            List<Book> allBooks;
+            if (currentSearchKeyword.isEmpty()) {
+                allBooks = bookService.getAllBooks();
             } else {
-                books = bookService.searchBooks(keyword);
+                allBooks = bookService.searchBooks(currentSearchKeyword);
             }
-            bookTable.setItems(FXCollections.observableArrayList(books));
+            
+            // 计算总页数
+            totalBookPages = (int) Math.ceil((double) allBooks.size() / ITEMS_PER_PAGE);
+            if (totalBookPages == 0) totalBookPages = 1;
+            
+            // 获取当前页的数据
+            int startIndex = (currentBookPage - 1) * ITEMS_PER_PAGE;
+            int endIndex = Math.min(startIndex + ITEMS_PER_PAGE, allBooks.size());
+            
+            List<Book> pageBooks = allBooks.subList(startIndex, endIndex);
+            bookTable.setItems(FXCollections.observableArrayList(pageBooks));
+            
+            // 更新分页控件
+            if (bookPagination != null) {
+                bookPagination.setPageCount(totalBookPages);
+                bookPagination.setCurrentPageIndex(currentBookPage - 1);
+            }
+            
         } catch (Exception e) {
-            showErrorAlert("搜索失败", "搜索图书失败：" + e.getMessage());
+            showErrorAlert("加载失败", "加载图书数据失败：" + e.getMessage());
         }
     }
     
@@ -556,12 +651,66 @@ public class StudentMainController extends BaseController implements Initializab
      * @return 选择的支付方式，如果取消返回null
      */
     private String showPaymentMethodDialog() {
-        List<String> choices = Arrays.asList("支付宝", "微信支付", "银行卡支付", "校园卡支付");
-        
-        ChoiceDialog<String> dialog = new ChoiceDialog<>("支付宝", choices);
+        // 创建自定义对话框
+        Dialog<String> dialog = new Dialog<>();
         dialog.setTitle("选择支付方式");
         dialog.setHeaderText("请选择您的支付方式");
-        dialog.setContentText("支付方式：");
+        
+        // 设置按钮类型
+        ButtonType confirmButtonType = new ButtonType("确认支付", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(confirmButtonType, ButtonType.CANCEL);
+        
+        // 创建支付方式选择界面
+        VBox content = new VBox(15);
+        content.setPadding(new javafx.geometry.Insets(20));
+        
+        Label titleLabel = new Label("💳 支付方式选择");
+        titleLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
+        
+        ToggleGroup paymentGroup = new ToggleGroup();
+        
+        // 支付宝选项
+        RadioButton alipayRadio = new RadioButton("💰 支付宝支付");
+        alipayRadio.setToggleGroup(paymentGroup);
+        alipayRadio.setSelected(true); // 默认选择
+        alipayRadio.setStyle("-fx-font-size: 14px;");
+        
+        // 微信支付选项
+        RadioButton wechatRadio = new RadioButton("💚 微信支付");
+        wechatRadio.setToggleGroup(paymentGroup);
+        wechatRadio.setStyle("-fx-font-size: 14px;");
+        
+        // 银行卡支付选项
+        RadioButton bankCardRadio = new RadioButton("🏦 银行卡支付");
+        bankCardRadio.setToggleGroup(paymentGroup);
+        bankCardRadio.setStyle("-fx-font-size: 14px;");
+        
+        // 校园卡支付选项
+        RadioButton campusCardRadio = new RadioButton("🎓 校园卡支付");
+        campusCardRadio.setToggleGroup(paymentGroup);
+        campusCardRadio.setStyle("-fx-font-size: 14px;");
+        
+        content.getChildren().addAll(titleLabel, 
+            new Separator(),
+            alipayRadio, wechatRadio, bankCardRadio, campusCardRadio);
+        
+        dialog.getDialogPane().setContent(content);
+        
+        // 设置结果转换器
+        dialog.setResultConverter(dialogButton -> {
+            if (dialogButton == confirmButtonType) {
+                RadioButton selectedRadio = (RadioButton) paymentGroup.getSelectedToggle();
+                if (selectedRadio != null) {
+                    String text = selectedRadio.getText();
+                    // 提取支付方式名称（去掉emoji）
+                    if (text.contains("支付宝")) return "支付宝";
+                    if (text.contains("微信")) return "微信支付";
+                    if (text.contains("银行卡")) return "银行卡支付";
+                    if (text.contains("校园卡")) return "校园卡支付";
+                }
+            }
+            return null;
+        });
         
         Optional<String> result = dialog.showAndWait();
         return result.orElse(null);
@@ -671,11 +820,11 @@ public class StudentMainController extends BaseController implements Initializab
                 // 在JavaFX应用线程中执行刷新操作
                 Platform.runLater(() -> {
                     try {
-                        // 刷新图书列表
-                        loadBooks();
-                        // 刷新订单列表（如果当前用户已设置），保持当前筛选状态
+                        // 刷新图书列表（保持当前页和搜索条件）
+                        loadBooksWithPagination();
+                        // 刷新订单列表（如果当前用户已设置），保持当前筛选状态和页码
                         if (currentUser != null) {
-                            refreshOrdersWithCurrentFilter();
+                            loadOrdersWithPagination();
                         }
                     } catch (Exception e) {
                         // 静默处理异常，避免干扰用户操作

@@ -61,6 +61,13 @@
                            </VBox.margin>
                         </TableView>
                         
+                        <!-- 图书分页控件 -->
+                        <Pagination fx:id="bookPagination" pageCount="1" currentPageIndex="0">
+                           <VBox.margin>
+                              <Insets left="10.0" right="10.0" bottom="10.0" />
+                           </VBox.margin>
+                        </Pagination>
+                        
                         <!-- 操作栏 -->
                         <HBox alignment="CENTER_LEFT" spacing="10.0">
                            <children>
@@ -147,6 +154,13 @@
                               <Insets left="10.0" right="10.0" top="5.0" />
                            </VBox.margin>
                         </TableView>
+                        
+                        <!-- 订单分页控件 -->
+                        <Pagination fx:id="orderPagination" pageCount="1" currentPageIndex="0">
+                           <VBox.margin>
+                              <Insets left="10.0" right="10.0" bottom="5.0" />
+                           </VBox.margin>
+                        </Pagination>
                         
                         <!-- 操作按钮 -->
                         <HBox alignment="CENTER_LEFT" spacing="10.0">
