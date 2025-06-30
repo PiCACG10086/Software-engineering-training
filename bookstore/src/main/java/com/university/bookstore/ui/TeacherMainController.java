@@ -11,6 +11,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.control.SelectionMode;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
@@ -173,6 +174,9 @@ public class TeacherMainController extends BaseController implements Initializab
                 }
             }
         });
+        
+        // 设置表格选择模式为单选
+        bookTable.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
     }
     
 
@@ -192,6 +196,9 @@ public class TeacherMainController extends BaseController implements Initializab
             }
             return new SimpleStringProperty("");
         });
+        
+        // 设置表格选择模式为单选
+        studentTable.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
     }
     
     /**
@@ -227,6 +234,9 @@ public class TeacherMainController extends BaseController implements Initializab
                 }
             }
         });
+        
+        // 设置表格选择模式为单选
+        orderTable.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
     }
     
     /**

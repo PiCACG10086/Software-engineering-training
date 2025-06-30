@@ -21,8 +21,8 @@ CREATE INDEX idx_book_price ON t_book(price);
 CREATE INDEX idx_book_stock ON t_book(stock);
 
 -- 2. 为订单表添加索引
--- 学生ID索引
-CREATE INDEX idx_order_student_id ON t_order(student_id);
+-- 用户ID索引
+CREATE INDEX idx_order_user_id ON t_order(user_id);
 
 -- 订单状态索引
 CREATE INDEX idx_order_status ON t_order(status);
@@ -33,21 +33,21 @@ CREATE INDEX idx_order_create_time ON t_order(create_time);
 -- 订单号索引（如果不是唯一索引的话）
 CREATE INDEX idx_order_number ON t_order(order_number);
 
--- 复合索引：学生ID + 状态（用于用户查看自己的特定状态订单）
-CREATE INDEX idx_order_student_status ON t_order(student_id, status);
+-- 复合索引：用户ID + 状态（用于用户查看自己的特定状态订单）
+CREATE INDEX idx_order_user_status ON t_order(user_id, status);
 
 -- 复合索引：状态 + 创建时间（用于管理员按状态和时间查询）
 CREATE INDEX idx_order_status_time ON t_order(status, create_time);
 
 -- 3. 为订单详情表添加索引
 -- 订单ID索引
-CREATE INDEX idx_order_detail_order_id ON t_order_detail(order_id);
+CREATE INDEX idx_order_item_order_id ON t_order_item(order_id);
 
 -- 图书ID索引
-CREATE INDEX idx_order_detail_book_id ON t_order_detail(book_id);
+CREATE INDEX idx_order_item_book_id ON t_order_item(book_id);
 
 -- 复合索引：订单ID + 图书ID
-CREATE INDEX idx_order_detail_order_book ON t_order_detail(order_id, book_id);
+CREATE INDEX idx_order_item_order_book ON t_order_item(order_id, book_id);
 
 -- 4. 为用户表添加索引
 -- 用户名索引（如果不是唯一索引的话）
@@ -62,15 +62,15 @@ CREATE INDEX idx_user_student_id ON t_user(student_id);
 -- 创建时间索引
 CREATE INDEX idx_user_create_time ON t_user(create_time);
 
--- 5. 为购物车表添加索引（如果存在）
+-- 5. 为购物车表添加索引
 -- 用户ID索引
--- CREATE INDEX idx_cart_user_id ON t_cart(user_id);
+CREATE INDEX idx_cart_user_id ON t_cart(user_id);
 
 -- 图书ID索引
--- CREATE INDEX idx_cart_book_id ON t_cart(book_id);
+CREATE INDEX idx_cart_book_id ON t_cart(book_id);
 
 -- 复合索引：用户ID + 图书ID
--- CREATE INDEX idx_cart_user_book ON t_cart(user_id, book_id);
+CREATE INDEX idx_cart_user_book ON t_cart(user_id, book_id);
 
 -- 6. MySQL性能优化配置建议
 -- 以下配置需要在MySQL配置文件(my.cnf或my.ini)中设置
@@ -118,21 +118,24 @@ max_heap_table_size = 64M
 -- 7. 分析表统计信息（定期执行）
 ANALYZE TABLE t_book;
 ANALYZE TABLE t_order;
-ANALYZE TABLE t_order_detail;
+ANALYZE TABLE t_order_item;
 ANALYZE TABLE t_user;
+ANALYZE TABLE t_cart;
 
 -- 8. 优化表（定期执行）
 OPTIMIZE TABLE t_book;
 OPTIMIZE TABLE t_order;
-OPTIMIZE TABLE t_order_detail;
+OPTIMIZE TABLE t_order_item;
 OPTIMIZE TABLE t_user;
+OPTIMIZE TABLE t_cart;
 
 -- 9. 查看索引使用情况的查询
 -- 查看表的索引信息
 -- SHOW INDEX FROM t_book;
 -- SHOW INDEX FROM t_order;
--- SHOW INDEX FROM t_order_detail;
+-- SHOW INDEX FROM t_order_item;
 -- SHOW INDEX FROM t_user;
+-- SHOW INDEX FROM t_cart;
 
 -- 查看慢查询
 -- SHOW VARIABLES LIKE 'slow_query%';

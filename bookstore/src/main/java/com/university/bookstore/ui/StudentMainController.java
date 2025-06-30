@@ -10,8 +10,19 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.control.SelectionMode;
 import javafx.scene.layout.VBox;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
+import javafx.util.Duration;
+import javafx.util.StringConverter;
+import javafx.animation.FadeTransition;
+import javafx.animation.PauseTransition;
+import javafx.geometry.Pos;
 import javafx.geometry.Insets;
 import javafx.fxml.FXMLLoader;
 import javafx.application.Platform;
@@ -128,7 +139,7 @@ public class StudentMainController extends BaseController implements Initializab
     private static final int AUTO_REFRESH_INTERVAL = 5000; // 5秒自动刷新
     
     // 分页相关字段
-    private static final int ITEMS_PER_PAGE = 10; // 每页显示的项目数
+    private static final int ITEMS_PER_PAGE = 20; // 每页显示的项目数，增加到20以更好填充列表
     private int currentBookPage = 1; // 当前图书页码
     private int totalBookPages = 1; // 图书总页数
     private int currentOrderPage = 1; // 当前订单页码
@@ -191,6 +202,9 @@ public class StudentMainController extends BaseController implements Initializab
         priceColumn.setCellValueFactory(new PropertyValueFactory<>("price"));
         stockColumn.setCellValueFactory(new PropertyValueFactory<>("stock"));
         
+        // 设置表格选择模式为单选
+        bookTable.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
+        
         // 设置价格格式
         priceColumn.setCellFactory(column -> new TableCell<Book, BigDecimal>() {
             @Override
@@ -216,6 +230,9 @@ public class StudentMainController extends BaseController implements Initializab
         cartQuantityColumn.setCellValueFactory(new PropertyValueFactory<>("quantity"));
         cartSubtotalColumn.setCellValueFactory(cellData -> 
             cellData.getValue().subtotalProperty());
+        
+        // 设置表格选择模式为单选
+        cartTable.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
         
         // 设置价格格式
         cartPriceColumn.setCellFactory(column -> new TableCell<CartItem, BigDecimal>() {
@@ -262,6 +279,9 @@ public class StudentMainController extends BaseController implements Initializab
             return new SimpleStringProperty("");
         });
         
+        // 设置表格选择模式为单选
+        orderTable.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
+        
         // 设置价格格式
         orderTotalColumn.setCellFactory(column -> new TableCell<Order, BigDecimal>() {
             @Override
@@ -281,7 +301,45 @@ public class StudentMainController extends BaseController implements Initializab
      */
     private void initializeControls() {
         // 初始化数量选择器
-        quantitySpinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 99, 1));
+        quantitySpinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 999, 1));
+        quantitySpinner.setEditable(true); // 允许键盘输入
+        
+        // 添加键盘输入验证
+        quantitySpinner.getEditor().textProperty().addListener((obs, oldValue, newValue) -> {
+            if (!newValue.matches("\\d*")) {
+                quantitySpinner.getEditor().setText(oldValue);
+            } else if (!newValue.isEmpty()) {
+                try {
+                    int value = Integer.parseInt(newValue);
+                    if (value < 1) {
+                        quantitySpinner.getEditor().setText("1");
+                    } else if (value > 999) {
+                        quantitySpinner.getEditor().setText("999");
+                    }
+                } catch (NumberFormatException e) {
+                    quantitySpinner.getEditor().setText("1");
+                }
+            }
+        });
+        
+        // 失去焦点时确保值有效
+        quantitySpinner.getEditor().focusedProperty().addListener((obs, oldValue, newValue) -> {
+            if (!newValue) { // 失去焦点
+                String text = quantitySpinner.getEditor().getText();
+                if (text.isEmpty()) {
+                    quantitySpinner.getEditor().setText("1");
+                    quantitySpinner.getValueFactory().setValue(1);
+                } else {
+                    try {
+                        int value = Integer.parseInt(text);
+                        quantitySpinner.getValueFactory().setValue(value);
+                    } catch (NumberFormatException e) {
+                        quantitySpinner.getEditor().setText("1");
+                        quantitySpinner.getValueFactory().setValue(1);
+                    }
+                }
+            }
+        });
         
         // 初始化订单状态筛选下拉框
         orderStatusFilter.setItems(FXCollections.observableArrayList(
@@ -326,8 +384,8 @@ public class StudentMainController extends BaseController implements Initializab
         if (bookPagination != null) {
             bookPagination.setPageFactory(pageIndex -> {
                 currentBookPage = pageIndex + 1;
-                loadBooksWithPagination();
-                return bookTable;
+                loadBooksWithPaginationOnly();
+                return new VBox(); // 返回空的VBox，避免布局问题
             });
         }
         
@@ -335,8 +393,8 @@ public class StudentMainController extends BaseController implements Initializab
         if (orderPagination != null) {
             orderPagination.setPageFactory(pageIndex -> {
                 currentOrderPage = pageIndex + 1;
-                loadOrdersWithPagination();
-                return orderTable;
+                loadOrdersWithPaginationOnly();
+                return new VBox(); // 返回空的VBox，避免布局问题
             });
         }
     }
@@ -412,6 +470,36 @@ public class StudentMainController extends BaseController implements Initializab
     }
     
     /**
+     * 仅加载订单数据，不更新分页控件（避免循环调用）
+     */
+    private void loadOrdersWithPaginationOnly() {
+        if (currentUser == null) return;
+        
+        try {
+            List<Order> allOrders;
+            if ("全部订单".equals(currentOrderFilter)) {
+                allOrders = orderService.getOrdersByStudentId(currentUser.getId());
+            } else {
+                allOrders = orderService.getOrdersByStudentIdAndStatus(currentUser.getId(), currentOrderFilter);
+            }
+            
+            // 获取当前页的数据
+            int startIndex = (currentOrderPage - 1) * ITEMS_PER_PAGE;
+            int endIndex = Math.min(startIndex + ITEMS_PER_PAGE, allOrders.size());
+            
+            if (startIndex < allOrders.size()) {
+                List<Order> pageOrders = allOrders.subList(startIndex, endIndex);
+                orderTable.setItems(FXCollections.observableArrayList(pageOrders));
+            } else {
+                orderTable.setItems(FXCollections.observableArrayList());
+            }
+            
+        } catch (Exception e) {
+            showErrorAlert("加载失败", "加载订单数据失败：" + e.getMessage());
+        }
+    }
+    
+    /**
      * 处理搜索事件
      */
     @FXML
@@ -448,6 +536,34 @@ public class StudentMainController extends BaseController implements Initializab
             if (bookPagination != null) {
                 bookPagination.setPageCount(totalBookPages);
                 bookPagination.setCurrentPageIndex(currentBookPage - 1);
+            }
+            
+        } catch (Exception e) {
+            showErrorAlert("加载失败", "加载图书数据失败：" + e.getMessage());
+        }
+    }
+    
+    /**
+     * 仅加载图书数据，不更新分页控件（避免循环调用）
+     */
+    private void loadBooksWithPaginationOnly() {
+        try {
+            List<Book> allBooks;
+            if (currentSearchKeyword.isEmpty()) {
+                allBooks = bookService.getAllBooks();
+            } else {
+                allBooks = bookService.searchBooks(currentSearchKeyword);
+            }
+            
+            // 获取当前页的数据
+            int startIndex = (currentBookPage - 1) * ITEMS_PER_PAGE;
+            int endIndex = Math.min(startIndex + ITEMS_PER_PAGE, allBooks.size());
+            
+            if (startIndex < allBooks.size()) {
+                List<Book> pageBooks = allBooks.subList(startIndex, endIndex);
+                bookTable.setItems(FXCollections.observableArrayList(pageBooks));
+            } else {
+                bookTable.setItems(FXCollections.observableArrayList());
             }
             
         } catch (Exception e) {
@@ -495,7 +611,7 @@ public class StudentMainController extends BaseController implements Initializab
         }
         
         cartTable.refresh();
-        showInfoAlert("添加成功", "图书已添加到购物车");
+        showToastNotification("图书已添加到购物车");
     }
     
     /**
@@ -1017,5 +1133,56 @@ public class StudentMainController extends BaseController implements Initializab
             showErrorAlert("跳转失败", "返回登录界面时发生错误：" + e.getMessage());
             e.printStackTrace();
         }
+    }
+    
+    /**
+     * 显示Toast样式的通知
+     */
+    private void showToastNotification(String message) {
+        // 创建通知标签
+        Label toastLabel = new Label(message);
+        toastLabel.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; " +
+                           "-fx-padding: 10px 20px; -fx-background-radius: 5px; " +
+                           "-fx-font-size: 14px; -fx-font-weight: bold;");
+        
+        // 获取主界面的根容器（BorderPane）
+        BorderPane rootPane = (BorderPane) bookTable.getScene().getRoot();
+        
+        // 创建一个StackPane来包装通知，以便定位
+        StackPane toastContainer = new StackPane();
+        toastContainer.getChildren().add(toastLabel);
+        toastContainer.setStyle("-fx-background-color: transparent;");
+        toastContainer.setMouseTransparent(true);
+        
+        // 设置通知位置（右上角）
+        StackPane.setAlignment(toastLabel, Pos.TOP_RIGHT);
+        StackPane.setMargin(toastLabel, new Insets(20, 20, 0, 0));
+        
+        // 添加到根容器的顶部
+        rootPane.setTop(toastContainer);
+        
+        // 创建淡入动画
+        FadeTransition fadeIn = new FadeTransition(Duration.millis(300), toastLabel);
+        fadeIn.setFromValue(0.0);
+        fadeIn.setToValue(1.0);
+        
+        // 创建停留时间
+        PauseTransition pause = new PauseTransition(Duration.millis(2000));
+        
+        // 创建淡出动画
+        FadeTransition fadeOut = new FadeTransition(Duration.millis(300), toastLabel);
+        fadeOut.setFromValue(1.0);
+        fadeOut.setToValue(0.0);
+        fadeOut.setOnFinished(e -> {
+            // 恢复原来的顶部内容
+            rootPane.setTop(null);
+        });
+        
+        // 按顺序播放动画
+        fadeIn.setOnFinished(e -> pause.play());
+        pause.setOnFinished(e -> fadeOut.play());
+        
+        // 开始动画
+        fadeIn.play();
     }
 }
