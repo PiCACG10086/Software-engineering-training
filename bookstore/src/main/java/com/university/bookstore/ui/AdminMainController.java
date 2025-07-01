@@ -158,6 +158,9 @@ public class AdminMainController extends BaseController implements Initializable
     // 当前编辑的图书
     private Book currentEditingBook;
     
+    // 编辑状态标志
+    private boolean isEditingBook = false;
+    
     // 分页相关字段
     private static final int ITEMS_PER_PAGE = 20; // 每页显示的项目数
     private int currentBookPage = 1; // 当前图书页码
@@ -238,7 +241,7 @@ public class AdminMainController extends BaseController implements Initializable
         // 设置选择事件
         bookTable.getSelectionModel().selectedItemProperty().addListener(
             (obs, oldSelection, newSelection) -> {
-                if (newSelection != null) {
+                if (newSelection != null && !isEditingBook) {
                     loadBookToForm(newSelection);
                 }
             });
@@ -406,12 +409,27 @@ public class AdminMainController extends BaseController implements Initializable
      * 分页加载图书数据
      */
     private void loadBooksWithPagination() {
+        loadBooksWithPagination(false);
+    }
+    
+    /**
+     * 加载图书数据（支持强制刷新）
+     */
+    private void loadBooksWithPagination(boolean forceRefresh) {
         try {
             List<Book> allBooks;
             if (currentBookSearchKeyword.isEmpty()) {
-                allBooks = bookService.getAllBooks();
+                if (forceRefresh) {
+                    allBooks = bookService.getAllBooksForceRefresh();
+                } else {
+                    allBooks = bookService.getAllBooks();
+                }
             } else {
-                allBooks = bookService.searchBooks(currentBookSearchKeyword);
+                if (forceRefresh) {
+                    allBooks = bookService.searchBooksForceRefresh(currentBookSearchKeyword);
+                } else {
+                    allBooks = bookService.searchBooks(currentBookSearchKeyword);
+                }
             }
             
             // 计算总页数
@@ -423,7 +441,12 @@ public class AdminMainController extends BaseController implements Initializable
             int endIndex = Math.min(startIndex + ITEMS_PER_PAGE, allBooks.size());
             
             List<Book> pageBooks = allBooks.subList(startIndex, endIndex);
+            
+            // 强制刷新TableView
+            bookTable.setItems(null);
+            bookTable.refresh();
             bookTable.setItems(FXCollections.observableArrayList(pageBooks));
+            bookTable.refresh();
             
             // 更新分页控件
             if (bookPagination != null) {
@@ -433,6 +456,55 @@ public class AdminMainController extends BaseController implements Initializable
             
         } catch (Exception e) {
             showErrorAlert("加载失败", "加载图书数据失败：" + e.getMessage());
+        }
+    }
+    
+    /**
+     * 根据图书ID选择并显示图书
+     */
+    private void selectBookById(Integer bookId) {
+        // 首先在当前页面查找
+        for (Book tableBook : bookTable.getItems()) {
+            if (tableBook.getId().equals(bookId)) {
+                bookTable.getSelectionModel().select(tableBook);
+                loadBookToForm(tableBook);
+                return;
+            }
+        }
+        
+        // 如果当前页面没有，搜索所有页面
+        try {
+            List<Book> allBooks;
+            if (currentBookSearchKeyword.isEmpty()) {
+                allBooks = bookService.getAllBooks();
+            } else {
+                allBooks = bookService.searchBooks(currentBookSearchKeyword);
+            }
+            
+            // 找到图书所在的页面
+            for (int i = 0; i < allBooks.size(); i++) {
+                if (allBooks.get(i).getId().equals(bookId)) {
+                    int targetPage = (i / ITEMS_PER_PAGE) + 1;
+                    if (targetPage != currentBookPage) {
+                        currentBookPage = targetPage;
+                        loadBooksWithPagination(true); // 强制刷新
+                    }
+                    
+                    // 选择图书
+                    Platform.runLater(() -> {
+                        for (Book tableBook : bookTable.getItems()) {
+                            if (tableBook.getId().equals(bookId)) {
+                                bookTable.getSelectionModel().select(tableBook);
+                                loadBookToForm(tableBook);
+                                break;
+                            }
+                        }
+                    });
+                    return;
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("查找图书失败: " + e.getMessage());
         }
     }
     
@@ -684,6 +756,7 @@ public class AdminMainController extends BaseController implements Initializable
     
     @FXML
     private void handleAddBook() {
+        isEditingBook = true;
         clearBookForm();
         setBookFormEditable(true);
         currentEditingBook = null;
@@ -697,6 +770,7 @@ public class AdminMainController extends BaseController implements Initializable
             return;
         }
         
+        isEditingBook = true;
         setBookFormEditable(true);
         currentEditingBook = selectedBook;
     }
@@ -744,7 +818,30 @@ public class AdminMainController extends BaseController implements Initializable
             }
             
             if (success) {
-                loadBooks();
+                // 保存当前编辑图书的ID
+                Integer editedBookId = currentEditingBook != null ? currentEditingBook.getId() : null;
+                
+                // 强制刷新图书数据（保持当前页面）
+                // 清除所有相关缓存确保获取最新数据
+                Platform.runLater(() -> {
+                    try {
+                        Thread.sleep(300); // 增加延迟确保数据库操作完成
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
+                    loadBooksWithPagination(true); // 强制刷新
+                    
+                    // 如果是编辑模式，重新选择并加载更新后的图书
+                    if (editedBookId != null) {
+                        // 再次延迟确保表格数据已更新
+                        Platform.runLater(() -> {
+                            selectBookById(editedBookId);
+                        });
+                    }
+                });
+                
+                isEditingBook = false;
+                currentEditingBook = null;
                 setBookFormEditable(false);
                 showInfoAlert("保存成功", "图书信息已保存");
             } else {
@@ -757,9 +854,11 @@ public class AdminMainController extends BaseController implements Initializable
     
     @FXML
     private void handleCancelBookEdit() {
+        isEditingBook = false;
         setBookFormEditable(false);
         if (currentEditingBook != null) {
             loadBookToForm(currentEditingBook);
+            currentEditingBook = null;
         } else {
             clearBookForm();
         }
@@ -1456,7 +1555,10 @@ public class AdminMainController extends BaseController implements Initializable
                 Platform.runLater(() -> {
                     try {
                         // 刷新图书、订单和用户数据，保持当前页和搜索/筛选条件
-                        loadBooksWithPagination();
+                        // 如果正在编辑图书，跳过图书数据刷新以避免覆盖用户输入
+                        if (!isEditingBook) {
+                            loadBooksWithPagination(true); // 强制刷新
+                        }
                         loadOrdersWithPagination();
                         loadUsersWithPagination();
                     } catch (Exception e) {

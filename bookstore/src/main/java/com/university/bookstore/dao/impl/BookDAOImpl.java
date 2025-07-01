@@ -19,7 +19,7 @@ public class BookDAOImpl implements BookDAO {
      */
     @Override
     public Book findById(Integer id) {
-        String sql = "SELECT * FROM t_book WHERE id = ?";
+        String sql = "SELECT SQL_NO_CACHE * FROM t_book WHERE id = ?";
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             
@@ -42,7 +42,7 @@ public class BookDAOImpl implements BookDAO {
      */
     @Override
     public Book findByIsbn(String isbn) {
-        String sql = "SELECT * FROM t_book WHERE isbn = ?";
+        String sql = "SELECT SQL_NO_CACHE * FROM t_book WHERE isbn = ?";
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             
@@ -66,7 +66,7 @@ public class BookDAOImpl implements BookDAO {
     @Override
     public List<Book> findAll() {
         List<Book> books = new ArrayList<>();
-        String sql = "SELECT * FROM t_book ORDER BY title";
+        String sql = "SELECT SQL_NO_CACHE * FROM t_book ORDER BY title";
         
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql);
@@ -88,7 +88,7 @@ public class BookDAOImpl implements BookDAO {
     @Override
     public List<Book> findByTitleLike(String title) {
         List<Book> books = new ArrayList<>();
-        String sql = "SELECT * FROM t_book WHERE title LIKE ? ORDER BY title";
+        String sql = "SELECT SQL_NO_CACHE * FROM t_book WHERE title LIKE ? ORDER BY title";
         
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -218,7 +218,7 @@ public class BookDAOImpl implements BookDAO {
     @Override
     public List<Book> searchBooks(String keyword) {
         List<Book> books = new ArrayList<>();
-        String sql = "SELECT * FROM t_book WHERE title LIKE ? OR author LIKE ? OR isbn LIKE ? ORDER BY title";
+        String sql = "SELECT SQL_NO_CACHE * FROM t_book WHERE title LIKE ? OR author LIKE ? OR isbn LIKE ? ORDER BY title";
         
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -246,7 +246,7 @@ public class BookDAOImpl implements BookDAO {
     @Override
     public List<Book> findWithPagination(int offset, int limit) {
         List<Book> books = new ArrayList<>();
-        String sql = "SELECT * FROM t_book ORDER BY id LIMIT ? OFFSET ?";
+        String sql = "SELECT SQL_NO_CACHE * FROM t_book ORDER BY id LIMIT ? OFFSET ?";
         
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {

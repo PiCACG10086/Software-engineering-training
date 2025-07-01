@@ -51,7 +51,13 @@ public class DBUtil {
             config.addDataSourceProperty("rewriteBatchedStatements", "true");
             config.addDataSourceProperty("cacheResultSetMetadata", "true");
             config.addDataSourceProperty("cacheServerConfiguration", "true");
-            config.addDataSourceProperty("elideSetAutoCommits", "true");
+            config.addDataSourceProperty("elideSetAutoCommits", "false");
+            config.setAutoCommit(true); // 确保自动提交
+            // 设置事务隔离级别为READ_COMMITTED，确保能读取到已提交的数据
+            config.setTransactionIsolation("TRANSACTION_READ_COMMITTED");
+            // 禁用缓存以确保数据一致性
+            config.addDataSourceProperty("useLocalSessionState", "false");
+            config.addDataSourceProperty("useLocalTransactionState", "false");
             config.addDataSourceProperty("maintainTimeStats", "false");
             
             // 连接测试

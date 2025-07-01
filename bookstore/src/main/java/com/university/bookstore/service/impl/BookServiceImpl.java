@@ -44,6 +44,24 @@ public class BookServiceImpl implements BookService {
         return bookDAO.findAll();
     }
     
+    /**
+     * 强制从数据库获取所有图书（绕过缓存）
+     */
+    public List<Book> getAllBooksForceRefresh() {
+        // 先清除相关缓存
+        CacheManager.clearByPattern("books_");
+        return bookDAO.findAll();
+    }
+    
+    /**
+     * 强制搜索图书（绕过缓存）
+     */
+    public List<Book> searchBooksForceRefresh(String keyword) {
+        // 先清除相关缓存
+        CacheManager.clearByPattern("books_");
+        return bookDAO.findByTitleLike(keyword);
+    }
+    
     @Override
     public List<Book> getBooksWithPagination(int page, int pageSize) {
         if (page <= 0 || pageSize <= 0) {

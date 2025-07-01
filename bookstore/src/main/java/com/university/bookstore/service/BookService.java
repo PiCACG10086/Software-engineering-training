@@ -31,6 +31,12 @@ public interface BookService {
     List<Book> getAllBooks();
     
     /**
+     * 强制从数据库获取所有图书（绕过缓存）
+     * @return 图书列表
+     */
+    List<Book> getAllBooksForceRefresh();
+    
+    /**
      * 分页获取图书列表
      * @param page 页码（从1开始）
      * @param pageSize 每页大小
@@ -71,6 +77,13 @@ public interface BookService {
      * @return 图书列表
      */
     List<Book> searchBooks(String keyword);
+    
+    /**
+     * 强制搜索图书（绕过缓存）
+     * @param keyword 关键词
+     * @return 图书列表
+     */
+    List<Book> searchBooksForceRefresh(String keyword);
     
     /**
      * 根据课程ID获取图书列表
